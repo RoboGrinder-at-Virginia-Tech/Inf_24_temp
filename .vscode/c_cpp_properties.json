@@ -1,0 +1,48 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/",
+                "${workspaceFolder}/Src",
+                "${workspaceFolder}/Src/App",
+                "${workspaceFolder}/Src/Communication",
+                "${workspaceFolder}/Src/Hardware",
+                "${workspaceFolder}/Src/Algorithm",
+                "${workspaceFolder}/Src/Robot_chassis",
+                "${workspaceFolder}/Inc",
+                "${workspaceFolder}/Drivers/STM32F4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Drivers//STM32F4xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F4xx/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "C:/Keil_v5_ARM/ARM/ARMCLANG/include",
+                "C:/Keil_v5_ARM/ARM/ARMCC/include"
+            ],
+            "forcedInclude": [
+                "C:/Keil_v5_ARM/ARM/ARMCC/include/stdint.h"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__CC_ARM",
+                "USE_HAL_DRIVER",
+                "STM32F427xx",  
+                "__packed=",
+                "__weak="
+            ],
+            "windowsSdkVersion": "10.0.17134.0",
+            
+            "intelliSenseMode": "msvc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}"
+                ]
+            }
+        }
+    ],
+    "version": 4
+}

@@ -1,0 +1,1 @@
+"compilerPath": "${Path}/arm-none-eabi-gcc.exe",
