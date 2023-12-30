@@ -792,7 +792,7 @@ void ui_coord_update()
 		 
 		 Char_Draw(&strFric, "979", UI_Graph_Del, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("FRIC!"), 3, Robot_Warning_Fric_X, Robot_Warning_Fric_Y, "FRIC!");
 	 }
-	 else if(get_user_fire_ctrl() == user_SHOOT_BOTH) //同时发射就是指semi
+	 else if(get_user_fire_ctrl() == user_SHOOT_SEMI) //同时发射就是指semi user_SHOOT_SEMI
 	 {
 		 ui_info.ui_gun_sts = gunSEMI;
 		 ui_info.box_gun_sts_coord[0] = TopLeft_REC_on_gun_SEMI_START_X;

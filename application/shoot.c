@@ -85,7 +85,7 @@ shoot_control_t shoot_control;          //射击数据
 int16_t temp_rpm_left;
 int16_t temp_rpm_right;
 
-fp32 temp_speed_setALL = 14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
+fp32 temp_speed_setALL = 23; //14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
 
 /**
   * @brief          射击初始化，初始化PID，遥控器指针，电机指针
@@ -102,7 +102,7 @@ void shoot_init(void)
     //遥控器指针
     shoot_control.shoot_rc = get_remote_control_point();
     //电机指针
-    shoot_control.shoot_motor_measure = get_trigger_motor_L_measure_point(); //   get_trigger_motor_measure_point();
+    shoot_control.shoot_motor_measure = get_trigger_motor_R_measure_point(); //   get_trigger_motor_measure_point();
     //初始化PID
 //    PID_init(&shoot_control.trigger_motor_pid, PID_POSITION, Trigger_speed_pid, TRIGGER_READY_PID_MAX_OUT, TRIGGER_READY_PID_MAX_IOUT);
 		shoot_PID_init(&shoot_control.trigger_motor_pid, SHOOT_PID_SEPARATED_INTEGRAL_IN_SPEED, Trigger_speed_pid, TRIGGER_READY_PID_MAX_OUT, TRIGGER_READY_PID_MAX_IOUT);
@@ -689,7 +689,7 @@ static void shoot_feedback_update(void)
 		
 		//电机是否离线检测
 		/*只扫描一次按键这个思路*/
-		if(toe_is_error(TRIGGER_MOTOR_TOE))
+		if(toe_is_error(TRIGGER_MOTOR17mm_R_TOE))
 		{
 			shoot_control.trigger_motor_17mm_is_online = 0x00;
 		}
@@ -1189,10 +1189,10 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 		if(shoot_control.trigger_motor_17mm_is_online)
 		{ //发射机构未断电
 #if TRIG_MOTOR_TURN
-			shoot_heat->rt_odom_angle = -(get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
+			shoot_heat->rt_odom_angle = -(get_R_barrel_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
 //		shoot_heat->rt_odom_angle = -(shoot_heat->angle);
 #else
-			shoot_heat->rt_odom_angle = (get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE; //TODO 里程计 初始值是负数 - 排除问题
+			shoot_heat->rt_odom_angle = (get_R_barrel_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE; //TODO 里程计 初始值是负数 - 排除问题
 //		shoot_heat->rt_odom_angle = (shoot_heat->angle);
 #endif
 

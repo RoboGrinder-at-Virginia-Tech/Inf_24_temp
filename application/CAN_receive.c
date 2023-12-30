@@ -572,18 +572,18 @@ void userCallback_CAN2_FIFO1_IT(CAN_HandleTypeDef *hcan)
 			i_can2 = rx_header.StdId - CAN2_START_ID; //CAN_SHOOTL_ID;
 			switch (rx_header.StdId)
 			{
-//					case CAN_SHOOTL_ID:
-//					{
-//							get_motor_measure_new(&motor_CAN2Bus[i_can2], rx_data);
-//						  detect_hook(SHOOT_FRIC_L_TOE);
-//							break;
-//					}
-//					case CAN_SHOOTR_ID:
-//					{
-//							get_motor_measure_new(&motor_CAN2Bus[i_can2], rx_data);
-//						  detect_hook(SHOOT_FRIC_R_TOE);
-//							break;
-//					}
+					case CAN_SHOOTL_ID:
+					{
+							get_motor_measure_new(&motor_CAN2Bus[i_can2], rx_data);
+						  detect_hook(SHOOT_FRIC_L_TOE);
+							break;
+					}
+					case CAN_SHOOTR_ID:
+					{
+							get_motor_measure_new(&motor_CAN2Bus[i_can2], rx_data);
+						  detect_hook(SHOOT_FRIC_R_TOE);
+							break;
+					}
 				  case CAN_TRIGGER_MOTOR_17mm_L_ID:
 					{
 							get_motor_measure_new(&motor_CAN2Bus[i_can2], rx_data);

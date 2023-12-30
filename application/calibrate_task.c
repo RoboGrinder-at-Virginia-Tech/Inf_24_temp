@@ -113,7 +113,7 @@
 #define FLASH_WRITE_BUF_LENGHT  (sizeof(head_cali_t) + sizeof(gimbal_cali_t) + sizeof(imu_cali_t) * 3  + CALI_LIST_LENGHT * 4)
 
 
-extern void L_R_barrel_all_fric_esc_pwm_calibration(void);
+//extern void L_R_barrel_all_fric_esc_pwm_calibration(void);
 
 /**
   * @brief          use remote control to begin a calibrate,such as gyro, gimbal, chassis
@@ -419,10 +419,10 @@ static void RC_cmd_to_calibrate(void)
         rc_cmd_time = 0;
         //send CAN reset ID cmd to M3508
         //发送CAN重设ID命令到3508
-				L_R_barrel_all_fric_esc_pwm_calibration(); //SZL 6-21修改为校准摩擦轮
-//        CAN_cmd_chassis_reset_ID();
-//        CAN_cmd_chassis_reset_ID();
-//        CAN_cmd_chassis_reset_ID();
+//				L_R_barrel_all_fric_esc_pwm_calibration(); //SZL 6-21修改为校准摩擦轮
+        CAN_cmd_chassis_reset_ID();
+        CAN_cmd_chassis_reset_ID();
+        CAN_cmd_chassis_reset_ID();
         cali_buzzer_off();
     }
 

@@ -43,8 +43,8 @@ typedef enum
 	
 	//CAN2
 		CAN2_START_ID = 0x201, // this is for program reference
-		//CAN_SHOOTL_ID = 0x201, // no use
-		//CAN_SHOOTR_ID = 0x202, // no use
+		CAN_SHOOTL_ID = 0x201, // no use
+		CAN_SHOOTR_ID = 0x202, // no use
 	
 		CAN_TRIGGER_MOTOR_17mm_L_ID = 0x205, // left trig motor
 		CAN_TRIGGER_MOTOR_17mm_R_ID = 0x208, // right trig motor
