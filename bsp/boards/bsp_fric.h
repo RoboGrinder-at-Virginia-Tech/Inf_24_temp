@@ -1,56 +1,6 @@
 #ifndef BSP_FRIC_H
 #define BSP_FRIC_H
 #include "struct_typedef.h"
-
-/* 2023 MD 炮塔 速度标定
-referee_current_shooter_17mm_speed_limit = 15m/s;
-
-
-
-*/
-
-/* ------ Below are old notes from 2021 and 2022 ------ */
-
-/* Below are for 2021 Heros:
-15m/s 
-右边 (发射方向) PWM1 fric1_on fric1_ramp 是值需要高一点的那个 NEW_FRIC_15ms_higher
-shoot_control.fric1_ramp.max_value(_const) = NEW_FRIC_15ms_higher;
-shoot_control.fric2_ramp.max_value(_const) = NEW_FRIC_15ms;
-		 
-左边 是数值正常的NEW_FRIC_15ms
-
-1)
-单发时14.9 14.8 15.0m/s; 连发时 12.几 13.几都有 基本维持在13.几
-NEW_FRIC_15ms_higher 1150
-NEW_FRIC_15ms 1100
-
-2) 
-NEW_FRIC_15ms_higher 1150
-NEW_FRIC_15ms 1100
-
-3)单发 最高14.5  一般14.几14上下; 连发13上下0.5 偶尔会到14
-#define NEW_FRIC_15ms_higher 1150
-#define NEW_FRIC_15ms 1090
-
-4)单发 14.5.6.7.8 连发13.4.5左右 -------- 目前使用这个参数
-#define NEW_FRIC_15ms_higher 1150//1170
-#define NEW_FRIC_15ms 1095 //1070
-
-**)最保守参数 单发13.5 .8
-NEW_FRIC_15ms_higher 1150
-NEW_FRIC_15ms 1070
-*/
-
-//SZL 6-16-2022 新定义的 for 2022-Heros
-#define NEW_FRIC_15ms_higher 1135//1150//1170         speed is around 14m/s at 1140 and 1085 
-//#define NEW_FRIC_15ms 1080//1095 //1070 正常使用的
-#define NEW_FRIC_15ms 1200 //1150// --------------- Debug --------------------
-#define NEW_FRIC_18ms 1219
-
-/* This comment bolck for Inf_omni_23 OR MD17
-起转PWM 1150
-*/
-
 //1320 speed level 2 single shoot - fric_down
 //1400 speed level 2 continuous shoot- fric_up
 //1206 speed level 1 single 18m/s
@@ -59,7 +9,7 @@ NEW_FRIC_15ms 1070
 
 #define FRIC_UP 1097
 #define FRIC_DOWN 1097		
-#define FRIC_OFF 1000 // 4-15-2023 仍然使用的 停转PWM
+#define FRIC_OFF 1000
 
 #define FRIC_LV1 1097
 #define FRIC_LV2 1114
@@ -77,19 +27,14 @@ NEW_FRIC_15ms 1070
 #define M3508_FRIC_STOP 0
 
 
-extern void L_barrel_fric_off(void);
-extern void L_barrel_fric1_on(uint16_t cmd);
-extern void L_barrel_fric2_on(uint16_t cmd);
-
-extern void R_barrel_fric_off(void);
-extern void R_barrel_fric3_on(uint16_t cmd);
-extern void R_barrel_fric4_on(uint16_t cmd);
+extern void fric_off(void);
+extern void fric1_on(uint16_t cmd);
+extern void fric2_on(uint16_t cmd);
 
 extern void M3508_fric_wheel_spin_control(fp32 left_fric_speed, fp32 right_fric_speed);
 #endif
 
 /*
-		2021 步兵的老程序 别管
 		注意 现在PID 800 100 600 为了完全避免超调，可能还需要将800  改小
 		// 15:48 offset 3m/s 此时15m/s程序 出来18m/s; 
 		// 1551 测试程序设置 12.5m/s 裁判系统测速 14.5-14.7m/s 
