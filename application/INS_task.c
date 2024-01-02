@@ -60,8 +60,8 @@
 
 
 #define IST8310_BOARD_INSTALL_SPIN_MATRIX   \
+    {0.0f, -1.0f, 0.0f},                     \
     {1.0f, 0.0f, 0.0f},                     \
-    {0.0f, 1.0f, 0.0f},                     \
     {0.0f, 0.0f, 1.0f}                      \
 		
 /*
@@ -201,6 +201,8 @@ fp32 INS_accel[3] = {0.0f, 0.0f, 0.0f}; //SZL 删掉static
 fp32 INS_mag[3] = {0.0f, 0.0f, 0.0f}; //SZL 删掉static
 fp32 INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f}; //SZL 删掉static
 fp32 INS_angle[3] = {0.0f, 0.0f, 0.0f};      //euler angle, unit rad.欧拉角 单位 rad
+fp32 WRT_North_Heading;
+fp32 realtime_bmi088temp;
 
 //first_order_filter_type_t bcmd_pitch_rate_slow_set_angular_velocity; //一阶低通滤波 用到 pitch rate, 减少快速跳变
 first_order_filter_type_t bcmd_pitch_rate_low_pass_filter;
@@ -268,6 +270,11 @@ SZL 2-2-2022添加 vector_pre_mult_3x3_matrix 指的是 matrix_3x3_pre_mult_vector
 //				out_vector[i] = in_vector[0] * matrixA[i][0] + in_vector[1] * matrixA[i][1] + in_vector[2] * matrixA[i][2] + in_vector[3] * matrixA[i][3];
 //		}
 //}
+
+void calculate_heading(fp32 q[4], fp32 *heading) {
+    *heading = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 2.0f * (q[0] * q[0] + q[1] * q[1]) - 1.0f);
+}
+
 
 /**
   * @brief          imu task, init bmi088, ist8310, calculate the euler angle
@@ -361,6 +368,7 @@ void INS_task(void const *pvParameters)
             BMI088_temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, &bmi088_real_data.temp);
             imu_temp_control(bmi088_real_data.temp);
         }
+				realtime_bmi088temp = bmi088_real_data.temp;
 
         //rotate and zero drift 
         imu_cali_slove(INS_gyro, INS_accel, INS_mag, &bmi088_real_data, &ist8310_real_data);
@@ -385,6 +393,14 @@ void INS_task(void const *pvParameters)
 
 
         AHRS_update(INS_quat, timing_time, INS_gyro, accel_fliter_3, INS_mag);
+				
+				// 计算相对于地磁北的姿态角
+				fp32 heading;
+				calculate_heading(INS_quat, &heading);
+				
+				// 转换为度数或其他所需的单位
+				WRT_North_Heading = heading * 180.0f / PI; // 假设PI是圆周率的定义
+				
         get_angle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSET, INS_angle + INS_ROLL_ADDRESS_OFFSET);
 				
 //				AHRS_update_ins(INS_quat, timing_time, INS_gyro, accel_fliter_3, INS_mag);
@@ -410,7 +426,7 @@ void INS_task(void const *pvParameters)
         {
             mag_update_flag &= ~(1<< IMU_DR_SHFITS);
             mag_update_flag |= (1 << IMU_SPI_SHFITS);
-//            ist8310_read_mag(ist8310_real_data.mag);
+            ist8310_read_mag(ist8310_real_data.mag);
         }
 
     }

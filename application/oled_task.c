@@ -25,9 +25,16 @@
 #include "SuperCap_comm.h"
 #include "prog_msg_utility.h"
 #include "stdio.h"
+#include "bmi088driver.h"
+#include "calibrate_task.h"
 
 #define OLED_CONTROL_TIME 10 //100 //10
 #define REFRESH_RATE    10
+
+extern fp32 INS_angle[3];
+extern bmi088_real_data_t bmi088_real_data;
+extern fp32 realtime_bmi088temp;
+extern int8_t get_control_temperature(void);
 
 const error_t *error_list_local;
 
@@ -122,43 +129,86 @@ void oled_task(void const * argument)
 								OLED_show_string(90, 50, (uint8_t*)"DBUS");
                 OLED_show_graphic(115, 50, &check_box[error_list_local[DBUS_TOE].error_exist]);
 								
-								//添加两种超级电容在线状态框和电压 - 在DBUS旁边 - TODO: cap电压数据限制
-								char cap_vol_str[20];
-								sprintf(cap_vol_str, "%.1f", get_current_cap_voltage());
-								OLED_show_string(30, 50, (uint8_t*)"SP");
-								OLED_show_string(30+15, 50, (uint8_t*)cap_vol_str); //30+20, 50
-                OLED_show_graphic(50+25, 50, &check_box[error_list_local[SCAP_23_TOR].error_exist]);
+//								//添加两种超级电容在线状态框和电压 - 在DBUS旁边 - TODO: cap电压数据限制
+//								char cap_vol_str[20];
+//								sprintf(cap_vol_str, "%.1f", get_current_cap_voltage());
+//								OLED_show_string(30, 50, (uint8_t*)"SP");
+//								OLED_show_string(30+15, 50, (uint8_t*)cap_vol_str); //30+20, 50
+//                OLED_show_graphic(50+25, 50, &check_box[error_list_local[SCAP_23_TOR].error_exist]);
 								
-								//在电池旁边 显示Fric L和Fric R的连接状态
-								/*电池logo 估计长度: 32; 宽度: 15*/
-								//Fric L
-								OLED_show_string(32, 0, (uint8_t*)"FL");
-								OLED_show_graphic(32+12, 0, &check_box[error_list_local[SHOOT_FRIC_L_TOE].error_exist]);
+								//陀螺仪温度
+								char bmi088_temp[20];				
+                OLED_show_string(30, 50, (uint8_t*)"TP:\0");
+								sprintf(bmi088_temp, "%.4f", realtime_bmi088temp);
+								OLED_show_string(30+15, 50, (uint8_t*)bmi088_temp);
 								
-								//Fric R
-								OLED_show_string(64, 0, (uint8_t*)"FR");
-								OLED_show_graphic(64+12, 0, &check_box[error_list_local[SHOOT_FRIC_R_TOE].error_exist]);
+//								char bmi088_temp_target[20];		
+//								sprintf(bmi088_temp_target, "%d", get_control_temperature());
+//								OLED_show_string(0+15, 50, (uint8_t*)bmi088_temp_target);
 								
-								//szl 3-28 add 1s tick time display
-								OLED_show_string(96, 0, (uint8_t*)"T");
-								OLED_show_string(96+6, 0, (uint8_t*)util_1s_time_cnt_toString());
+//								//在电池旁边 显示Fric L和Fric R的连接状态
+//								/*电池logo 估计长度: 32; 宽度: 15*/
+//								//Fric L
+//								OLED_show_string(32, 0, (uint8_t*)"FL");
+//								OLED_show_graphic(32+12, 0, &check_box[error_list_local[SHOOT_FRIC_L_TOE].error_exist]);
+//								
+//								//Fric R
+//								OLED_show_string(64, 0, (uint8_t*)"FR");
+//								OLED_show_graphic(64+12, 0, &check_box[error_list_local[SHOOT_FRIC_R_TOE].error_exist]);
+//								
+//								//szl 3-28 add 1s tick time display
+//								OLED_show_string(96, 0, (uint8_t*)"T");
+//								OLED_show_string(96+6, 0, (uint8_t*)util_1s_time_cnt_toString());
 								
-                for(i = CHASSIS_MOTOR1_TOE; i < CHASSIS_MOTOR4_TOE + 1; i++) //for(i = CHASSIS_MOTOR1_TOE; i < TRIGGER_MOTOR_TOE + 1; i++)
-                {		//第一排的4个设备
-                    show_col = ((i-1) * 32) % 128;
-                    show_row = 15 + (i-1) / 4 * 12;
-                    OLED_show_char(show_col, show_row, 'M');
-                    OLED_show_char(show_col + 6, show_row, '0'+i);
-                    OLED_show_graphic(show_col + 12, show_row, &check_box[error_list_local[i].error_exist]);
-                }
+								char cur_angle[20];
+								//char cur_string[10];
 								
-								for(i = YAW_GIMBAL_MOTOR_TOE; i < TRIGGER_MOTOR17mm_R_TOE + 1; i++)
-								{
-										show_col = ((i-1) * 32) % 128; //(i * 32) % 128;
-                    show_row = 15 + (i-1) / 4 * 12; //15 + i / 4 * 12;
-                    OLED_show_string(show_col, show_row, other_toe_name0[i - YAW_GIMBAL_MOTOR_TOE]);
-                    OLED_show_graphic(show_col + 18, show_row, &check_box[error_list_local[i].error_exist]);
-								}
+                OLED_show_string(32, 0, (uint8_t*)"Roll:\0");
+								sprintf(cur_angle, "%.5f", INS_angle[0]);
+								OLED_show_string(32+30, 0, (uint8_t*)cur_angle);
+								
+//                for(i = CHASSIS_MOTOR1_TOE; i < CHASSIS_MOTOR4_TOE + 1; i++) //for(i = CHASSIS_MOTOR1_TOE; i < TRIGGER_MOTOR_TOE + 1; i++)
+//                {		//第一排的4个设备
+//                    show_col = ((i-1) * 32) % 128;
+//                    show_row = 15 + (i-1) / 4 * 12;
+//                    OLED_show_char(show_col, show_row, 'M');
+//                    OLED_show_char(show_col + 6, show_row, '0'+i);
+//                    OLED_show_graphic(show_col + 12, show_row, &check_box[error_list_local[i].error_exist]);
+//                }
+
+								
+//								uint8_t i = 1;
+//								show_col = ((i-1) * 32) % 128;
+//                show_row = 15 + (i-1) / 4 * 12;
+//                OLED_show_string(show_col, show_row, (uint8_t*)"Roll:\0");
+//                //OLED_show_char(show_col + 6, show_row, '0'+i);
+//                //OLED_show_graphic(show_col + 12, show_row, &check_box[error_list_local[i].error_exist]);
+//								sprintf(cur_angle, "%.5f", INS_angle[0]);
+//								OLED_show_string(show_col+30, show_row, (uint8_t*)cur_angle);
+								
+								i = 1;
+								show_col = ((i-1) * 32) % 128;
+                show_row = 15 + (i-1) / 4 * 12;
+                OLED_show_string(show_col, show_row, (uint8_t*)"Pit:\0");
+                //OLED_show_char(show_col + 6, show_row, '0'+i);
+                //OLED_show_graphic(show_col + 12, show_row, &check_box[error_list_local[i].error_exist]);
+								sprintf(cur_angle, "%.5f", INS_angle[1]);
+								OLED_show_string(show_col+30, show_row, (uint8_t*)cur_angle);
+								
+								
+//								for(i = YAW_GIMBAL_MOTOR_TOE; i < TRIGGER_MOTOR17mm_R_TOE + 1; i++)
+//								{
+//										show_col = ((i-1) * 32) % 128; //(i * 32) % 128;
+//                    show_row = 15 + (i-1) / 4 * 12; //15 + i / 4 * 12;
+//                    OLED_show_string(show_col, show_row, other_toe_name0[i - YAW_GIMBAL_MOTOR_TOE]);
+//                    OLED_show_graphic(show_col + 18, show_row, &check_box[error_list_local[i].error_exist]);
+//								}
+								i = 5;
+								show_col = ((i-1) * 32) % 128; //(i * 32) % 128;
+                show_row = 15 + (i-1) / 4 * 12; //15 + i / 4 * 12;
+								OLED_show_string(show_col, show_row, (uint8_t*)"Yaw:\0");
+								sprintf(cur_angle, "%.5f", INS_angle[2]);
+								OLED_show_string(show_col+30, show_row, (uint8_t*)cur_angle);
 
                 for(i = BOARD_GYRO_TOE; i < REFEREE_TOE + 1; i++)
                 {
