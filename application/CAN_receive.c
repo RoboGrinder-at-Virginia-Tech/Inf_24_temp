@@ -24,7 +24,7 @@
 
 #include "main.h"
 #include "bsp_rng.h"
-
+#include "can_comm.h"
 
 #include "detect_task.h"
 
@@ -417,6 +417,11 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 			i_can1 = rx_header.StdId - CAN_3508_M1_ID;//get motor id and index in array
 			switch (rx_header.StdId)
 			{
+					case 1:
+					{
+						STW_motor_can_callback(rx_data);
+						break;
+					}
 					case CAN_3508_M1_ID:
 					{
 							//get motor id and index in array

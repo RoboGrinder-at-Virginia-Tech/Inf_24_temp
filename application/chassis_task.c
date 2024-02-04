@@ -32,6 +32,8 @@
 //SZL 3-10-2022
 #include "SuperCap_comm.h"
 
+#include "motor_control.h"
+
 #define rc_deadband_limit(input, output, dealine)        \
     {                                                    \
         if ((input) > (dealine) || (input) < -(dealine)) \
@@ -157,7 +159,7 @@ void chassis_task(void const *pvParameters)
 //    {
 //        vTaskDelay(CHASSIS_CONTROL_TIME_MS);
 //    }
-
+		MotorControl_Start();
     while (1)
     {
         //set chassis control mode
@@ -184,18 +186,23 @@ void chassis_task(void const *pvParameters)
             //当遥控器掉线的时候，发送给底盘电机零电流.
             if (toe_is_error(DBUS_TOE))
             {
-                CAN_cmd_chassis(0, 0, 0, 0);
+                //CAN_cmd_chassis(0, 0, 0, 0);
             }
             else
             {
                 //send control current
                 //发送控制电流
-                CAN_cmd_chassis(chassis_move.motor_chassis[0].give_current, chassis_move.motor_chassis[1].give_current,
-                                chassis_move.motor_chassis[2].give_current, chassis_move.motor_chassis[3].give_current);
+                //CAN_cmd_chassis(chassis_move.motor_chassis[0].give_current, chassis_move.motor_chassis[1].give_current,
+                                //chassis_move.motor_chassis[2].give_current, chassis_move.motor_chassis[3].give_current);
             }
         }
 				//控制函数, 专门用于超级电容的发送
 				superCap_control_loop();
+				
+				/*--测试 STW电机--*/
+//				MotorControl_Start();
+				MotorControl_PositionHandler();
+				
 				//------------------------
 //				//Debug SZL 3-10-2022
 //				if(switch_is_mid(chassis_move.chassis_RC->rc.s[CHASSIS_MODE_CHANNEL]))

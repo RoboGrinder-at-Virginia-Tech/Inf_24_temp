@@ -58,7 +58,7 @@
           <ListingPath></ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
-          <CreateBatchFile>1</CreateBatchFile>
+          <CreateBatchFile>0</CreateBatchFile>
           <BeforeCompile>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx,USE_HAL_DRIVER,STM32F407xx,ARM_MATH_CM4,__FPU_USED=1U,__FPU_PRESENT=1U,__CC_ARM,ARM_MATH_MATRIX_CHECK,ARM_MATH_ROUNDING, __TARGET_FPU_VFP</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../application;../bsp/boards;../components/devices;../components/algorithm;../components/algorithm/Include;../components/support;../application/protocol;../components/controller;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../components/AnoPTv8</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../application;../bsp/boards;../components/devices;../components/algorithm;../components/algorithm/Include;../components/support;../application/protocol;../components/controller;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../components/AnoPTv8;..\components\STW</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -787,6 +787,26 @@
               <FileName>ist8310driver_middleware.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\devices\ist8310driver_middleware.c</FilePath>
+            </File>
+            <File>
+              <FileName>can_comm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STW\can_comm.c</FilePath>
+            </File>
+            <File>
+              <FileName>can_comm.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\STW\can_comm.h</FilePath>
+            </File>
+            <File>
+              <FileName>motor_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STW\motor_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\STW\motor_control.h</FilePath>
             </File>
           </Files>
         </Group>
