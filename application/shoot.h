@@ -66,7 +66,7 @@
 #define FULL_COUNT                  18
 //拨弹速度
 #define TRIGGER_SPEED               10.0f
-#define CONTINUE_TRIGGER_SPEED      12.0f//9.0f
+#define CONTINUE_TRIGGER_SPEED      9.0f//12.0f//9.0f
 #define READY_TRIGGER_SPEED         5.0f
 
 #define KEY_OFF_JUGUE_TIME          500
@@ -74,7 +74,7 @@
 #define SWITCH_TRIGGER_OFF          1
 
 //卡单时间 以及反转时间
-#define BLOCK_TRIGGER_SPEED         0.09f //1.0f
+#define BLOCK_TRIGGER_SPEED         0.88f //0.5f //之前的参数是1.0f
 #define BLOCK_TIME                  400 //700
 #define REVERSE_TIME                200 //500
 #define REVERSE_SPEED_LIMIT         13.0f
@@ -137,13 +137,13 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
 /*直接 - 裁判系统 原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
-#define SHOOT_HEAT_REMAIN_VALUE     20 //30 //50 //30//50//60//5-24之前:40//30: 1v1参数30; 3v3参数{20}
+#define SHOOT_HEAT_REMAIN_VALUE     10 //30 //50 //30//50//60//5-24之前:40//30: 1v1参数30; 3v3参数{20}
 
 /* 其它热量相关宏定义 - 本地计算热量 */
 #define ONE17mm_BULLET_HEAT_AMOUNT 10
 #define MIN_LOCAL_HEAT 0
 #define MAX_LOCAL_HEAT 500
-#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 20 //20 //5 1v1参数20; 3v3参数{10}
+#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 10 //20 //5 1v1参数20; 3v3参数{10}
 /*2022 infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲发弹set 0.67f*/
 #define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
 //Local heat安全值, 裁判系统离线时的安全值 - 2022步兵 冷却模式一级

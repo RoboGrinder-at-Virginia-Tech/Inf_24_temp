@@ -85,7 +85,7 @@ shoot_control_t shoot_control;          //射击数据
 int16_t temp_rpm_left;
 int16_t temp_rpm_right;
 
-fp32 temp_speed_setALL = 23; //14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
+fp32 temp_speed_setALL = 12; //23; //14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
 
 /**
   * @brief          射击初始化，初始化PID，遥控器指针，电机指针
