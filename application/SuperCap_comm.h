@@ -12,10 +12,15 @@
 //#define ICRA_superCap_fail_safe_power 65//40
 
 //发送给超级电容数据数值限制
-#define CMD_CHARGE_PWR_MAX 150
+#define CMD_CHARGE_PWR_MAX 155
 #define CMD_CHARGE_PWR_MIN 45
 
 /*超级电容电容组数据*/
+//2024第三代超级电容
+#define CHARACTERISTIC_VOLTAGE_GEN3_CAP 26.5f
+#define MIN_VOLTAGE_GEN3_CAP 0.0f
+#define CAPACITY_GEN3_CAP 5.0f
+
 //2023新超级电容
 #define CHARACTERISTIC_VOLTAGE_23_CAP 26.5f//26.5f //特征电压是充电电路输出电压，对于C620必须低一些，否则会触发保护
 #define MIN_VOLTAGE_23_CAP 13.0f
@@ -33,6 +38,7 @@ extern uint8_t debug_max_pwr;
 extern uint8_t debug_fail_safe_pwr;
 extern void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr);
 extern void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr);
+extern void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode);
 extern void CAN_command_wulie_Cap(uint16_t temPower);
 extern void superCap_offline_proc(void);
 extern bool_t superCap_is_data_error_proc(void);
@@ -50,6 +56,9 @@ extern bool_t all_superCap_is_offline(void);
 extern void sCap23_offline_proc(void);
 extern bool_t sCap23_is_data_error_proc(void);
 
+extern void gen3Cap_offline_proc(void);
+extern bool_t gen3Cap_is_data_error_proc(void);
+
 extern fp32 get_current_cap_voltage(void);
 extern fp32 get_current_cap_pct(void);
 
@@ -60,11 +69,17 @@ typedef enum
 	*/
 	 RMTypeC_Master_Command_ID = 0x4FF,
 	
+	// TypeC到gen3Cap_ID 的CAN报文
+	RMTypeC_Master_Command_ID_for_gen3Cap = 0x3FF,
+	
 	//SuperCap -> TypeC时 CAN报文 即反馈报文的ID:
 	 SuperCap_ID = 0x500,
 	
 	//sCap23易林超级电容 -> TypeC
 	 sCap23_ID = 0x501,
+	
+	 //彭睿 第三代超级电容 -> TypeC
+	 gen3Cap_ID = 0x503,
 	
 	//雾列的控制板
 	//TypeC -> wulie Cap
@@ -149,6 +164,37 @@ typedef struct
 	fp32 relative_EBpct; // 相对于最低电压的百分比
 	
 }sCap23_info_t;
+
+typedef struct
+{
+	//发给cap的数据
+	uint8_t max_charge_pwr_from_ref; //中间变量用于调试
+	uint8_t fail_safe_charge_pwr_ref; //中间变量用于调试
+	
+	uint8_t charge_pwr_command; //P-target
+	uint8_t fail_safe_charge_pwr_command; //P-failsafe
+	uint8_t dcdc_enable;
+	uint8_t dcdc_mode;
+	
+	//接收到的 经过转换后的数据
+	fp32 PowerData[3];
+	fp32 Vbank_f;
+	fp32 Pchassis_f;
+	fp32 Pmax_f;
+	uint8_t Pflag;
+	
+	//其它FSM 和 变量
+	superCap_connection_status_e status;
+	//这个是相对于0J 0%-100%
+	fp32 EBPct;
+	fp32 EBank;
+	
+	fp32 relative_EBpct; // 相对于最低电压的百分比
+	
+	//裁判系统
+	uint8_t power_management_chassis_output; // 0为无输出, 1为24v
+	
+}gen3Cap_info_t;
 
 typedef struct
 {

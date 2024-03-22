@@ -35,6 +35,7 @@ extern superCap_info_t superCap_info;
 extern wulieCap_info_t wulie_Cap_info;
 extern supercap_can_msg_id_e current_superCap;
 extern sCap23_info_t sCap23_info; //新的超级电容控制板
+extern gen3Cap_info_t gen3Cap_info;
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
@@ -483,6 +484,29 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							debug_r2.data[3] = rx_data_debug[0];
 							
 							detect_hook(SUPERCAP_TOE);
+							break;
+					}
+					case gen3Cap_ID:
+					{
+							current_superCap = gen3Cap_ID;
+							uint16_t* pPowerdata = (uint16_t *) rx_data;//------------------------------------
+							gen3Cap_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
+							gen3Cap_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
+							gen3Cap_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
+						
+							gen3Cap_info.Vbank_f = gen3Cap_info.PowerData[0]; //输入电压
+							gen3Cap_info.Pchassis_f = gen3Cap_info.PowerData[1];//底盘功率
+							gen3Cap_info.Pmax_f = gen3Cap_info.PowerData[2];//当前能补足的最大功率
+							gen3Cap_info.Pflag = rx_data[6];
+						
+							//计算容量
+							gen3Cap_info.EBank = 0.5f * gen3Cap_info.Vbank_f * gen3Cap_info.Vbank_f * CAPACITY_GEN3_CAP;//CAPACITY=6
+						  gen3Cap_info.EBPct = (gen3Cap_info.Vbank_f * gen3Cap_info.Vbank_f)/(CHARACTERISTIC_VOLTAGE_GEN3_CAP * CHARACTERISTIC_VOLTAGE_GEN3_CAP)*100.0f;
+							
+							//计算相对最低电压的百分比
+							gen3Cap_info.relative_EBpct = cal_capE_relative_pct(gen3Cap_info.Vbank_f, MIN_VOLTAGE_GEN3_CAP, CHARACTERISTIC_VOLTAGE_GEN3_CAP);
+							
+							detect_hook(GEN3CAP_TOE);
 							break;
 					}
 					case sCap23_ID:

@@ -135,10 +135,11 @@ typedef __packed struct //0x0103
     uint8_t supply_num;
 } ext_supply_projectile_booking_t;
 
-typedef __packed struct //0x0104
+typedef __packed struct //0x0104 - 3-19-2024
 {
     uint8_t level;
-		uint8_t foul_robot_id;
+	 uint8_t offending_robot_id;
+	 uint8_t count;
 } ext_referee_warning_t;
 
 typedef __packed struct //0x0105 飞镖相关
@@ -146,25 +147,18 @@ typedef __packed struct //0x0105 飞镖相关
 		uint8_t dart_remaining_time;
 } ext_dart_remaining_time_t;
 
-typedef __packed struct //0x0201 SZL 5-14-2022 新增 非常重要数据
+typedef __packed struct //0x0201 SZL 5-14-2022 新增 非常重要数据 - 
 {
-		uint8_t robot_id;
-		uint8_t robot_level;
-		uint16_t remain_HP;
-		uint16_t max_HP;
-		uint16_t shooter_id1_17mm_cooling_rate;
-		uint16_t shooter_id1_17mm_cooling_limit;
-		uint16_t shooter_id1_17mm_speed_limit;
-		uint16_t shooter_id2_17mm_cooling_rate;
-		uint16_t shooter_id2_17mm_cooling_limit;
-		uint16_t shooter_id2_17mm_speed_limit;
-		uint16_t shooter_id1_42mm_cooling_rate;
-		uint16_t shooter_id1_42mm_cooling_limit;
-		uint16_t shooter_id1_42mm_speed_limit;
-		uint16_t chassis_power_limit;
-		uint8_t mains_power_gimbal_output : 1;
-		uint8_t mains_power_chassis_output : 1;
-		uint8_t mains_power_shooter_output : 1;
+	uint8_t robot_id;
+	uint8_t robot_level;
+	uint16_t current_HP;
+	uint16_t maximum_HP;
+	uint16_t shooter_barrel_cooling_value;
+	uint16_t shooter_barrel_heat_limit;
+	uint16_t chassis_power_limit; 
+	uint8_t power_management_gimbal_output : 1;
+	uint8_t power_management_chassis_output : 1;
+	uint8_t power_management_shooter_output : 1;
 } ext_game_robot_status_t;
 
 /*
@@ -182,23 +176,22 @@ typedef __packed struct //0x0202
 shooter_heat0 对应 shooter_id1_17mm_cooling_heat
 shooter_heat1 对应 shooter_id2_17mm_cooling_heat
 */
-typedef __packed struct //0x0202 SZL改为串口协议附录V1.3 5-16-2023 V1.4
+typedef __packed struct //0x0202 3-19-2024
 {
     uint16_t chassis_volt;
 		uint16_t chassis_current;
 		float chassis_power;
 		uint16_t chassis_power_buffer;
-		uint16_t shooter_id1_17mm_cooling_heat;
-		uint16_t shooter_id2_17mm_cooling_heat;
-		uint16_t shooter_id1_42mm_cooling_heat;
+		uint16_t shooter_17mm_1_barrel_heat;
+		uint16_t shooter_17mm_2_barrel_heat;
+		uint16_t shooter_42mm_barrel_heat;
 } ext_power_heat_data_t;
 
-typedef __packed struct //0x0203
+typedef __packed struct //0x0203 3-19-2024  ------------- 以下还未改3-19-2024
 {
     float x;
     float y;
-    float z;
-    float yaw;
+    float angle;
 } ext_game_robot_pos_t;
 
 //typedef __packed struct //0x0204 old
@@ -362,7 +355,9 @@ extern uint16_t get_shooter_id1_17mm_speed_limit(void);
 extern uint16_t get_shooter_id2_17mm_speed_limit(void);
 
 extern uint16_t get_shooter_id1_17mm_cd_rate(void);
-extern uint16_t get_shooter_id2_17mm_cd_rate(void);
 
 extern uint32_t get_last_robot_state_rx_timestamp(void);
+
+extern uint8_t get_chassis_power_output_status(void);
+
 #endif

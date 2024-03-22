@@ -19,6 +19,7 @@ void superCap_offline_proc(void);
 static uint8_t              superCap_can_send_data[8];
 static uint8_t              wulieCap_can_send_data[8];
 static uint8_t              sCap23_can_send_data[8];
+static uint8_t              gen3Cap_can_send_data[8];
 
 superCap_info_t superCap_info1;
 superCap_info_t superCap_info2;
@@ -27,10 +28,12 @@ superCap_info_t superCap_info4;
 superCap_info_t superCap_info;//用的这一个 3 4和这个是正常的
 wulieCap_info_t wulie_Cap_info;//雾列超级电容控制板的结构体
 sCap23_info_t sCap23_info; //新的超级电容控制板
+gen3Cap_info_t gen3Cap_info; // 第三代超级电容
 
 CAN_TxHeaderTypeDef  superCap_tx_message;
 CAN_TxHeaderTypeDef  wulie_Cap_tx_message;
 CAN_TxHeaderTypeDef  sCap23_tx_message;
+CAN_TxHeaderTypeDef  gen3Cap_tx_message;
 
 supercap_can_msg_id_e current_superCap; //表明当前使用的是哪一个超级电容
 
@@ -157,6 +160,46 @@ void superCap_control_loop()
 			superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
 				
 			CAN_command_superCap(superCap_info.max_charge_pwr_command, superCap_info.fail_safe_charge_pwr_command);	
+		}
+		else if(current_superCap == gen3Cap_ID)
+		{
+			gen3Cap_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 0.0f;
+			if(gen3Cap_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
+			{
+				gen3Cap_info.max_charge_pwr_from_ref = 155; //按最大功率
+			}
+			
+			//计算fail_safe_charge_pwr_ref 修改成用ifelse标定等级标定fail safe, 这个的目的是 
+			// TODO 比赛中可能有临时的底盘充电增益, fail safe表示当前的一个安全数值
+			gen3Cap_info.fail_safe_charge_pwr_ref = gen3Cap_info.max_charge_pwr_from_ref;
+		
+			gen3Cap_info.charge_pwr_command = gen3Cap_info.max_charge_pwr_from_ref;
+			gen3Cap_info.fail_safe_charge_pwr_command = gen3Cap_info.fail_safe_charge_pwr_ref;
+			
+			//限制幅度
+			gen3Cap_info.charge_pwr_command = uint8_constrain(gen3Cap_info.charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			gen3Cap_info.fail_safe_charge_pwr_command = uint8_constrain(gen3Cap_info.fail_safe_charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			
+			
+			// 模式 TODO
+			gen3Cap_info.dcdc_mode = 0; //目前自动
+			
+			// 处理底盘开关机情况
+			if(toe_is_error(REFEREE_TOE))
+			{
+				gen3Cap_info.power_management_chassis_output = 1;// 默认开机 此变量用于调试
+			} else {
+				gen3Cap_info.power_management_chassis_output = get_chassis_power_output_status();
+			}
+			
+			if(gen3Cap_info.power_management_chassis_output)
+			{
+				gen3Cap_info.dcdc_enable = 1;
+				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode);
+			} else {
+				gen3Cap_info.dcdc_enable = 0;
+				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode);
+			}
 		}
 		else if(current_superCap == sCap23_ID)
 		{//sCap23易林超级电容控制板
@@ -326,6 +369,24 @@ void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr)
     HAL_CAN_AddTxMessage(&SCAP23_CAN, &sCap23_tx_message, sCap23_can_send_data, &send_mail_box);
 }
 
+void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode)
+{
+		uint32_t send_mail_box;
+    gen3Cap_tx_message.StdId = RMTypeC_Master_Command_ID_for_gen3Cap;
+    gen3Cap_tx_message.IDE = CAN_ID_STD;
+    gen3Cap_tx_message.RTR = CAN_RTR_DATA;
+    gen3Cap_tx_message.DLC = 0x08;
+    gen3Cap_can_send_data[0] = max_pwr;
+    gen3Cap_can_send_data[1] = fail_safe_pwr;
+    gen3Cap_can_send_data[2] = dcdc_enable;
+    gen3Cap_can_send_data[3] = dcdc_mode;
+    gen3Cap_can_send_data[4] = 0; 
+    gen3Cap_can_send_data[5] = 0; 
+    gen3Cap_can_send_data[6] = 0; 
+    gen3Cap_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&SCAP23_CAN, &gen3Cap_tx_message, gen3Cap_can_send_data, &send_mail_box);
+}
+
 void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr)
 {
 		uint32_t send_mail_box;
@@ -434,6 +495,19 @@ bool_t sCap23_is_data_error_proc()
 //		}
 }
 
+//以下为彭睿第三代超级电容相关
+void gen3Cap_offline_proc()
+{
+		gen3Cap_info.status = superCap_offline;
+}
+
+bool_t gen3Cap_is_data_error_proc()
+{
+		gen3Cap_info.status = superCap_online;
+		//永远 return 0;
+		return 0;
+}
+
 
 //以下为雾列相关的
 void wulie_Cap_offline_proc()
@@ -477,6 +551,20 @@ fp32 get_current_cap_voltage()
 		 {
 			 //ui_info.cap_pct = superCap_info.EBPct_fromCap;
 			 return superCap_info.VBKelvin_fromCap;
+		 }
+	 }
+	 else if(current_superCap == gen3Cap_ID)
+	 {
+		 if(toe_is_error(GEN3CAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 //ui_info.cap_pct = sCap23_info.EBPct;
+		   return gen3Cap_info.Vbank_f;
 		 }
 	 }
 	 else if(current_superCap == sCap23_ID)
@@ -594,6 +682,20 @@ fp32 get_current_capE_relative_pct()
 			 else
 			 {
 				 return sCap23_info.relative_EBpct;
+			 }
+		 }
+		 else if(current_superCap == gen3Cap_ID)
+		 {
+			 if(toe_is_error(GEN3CAP_TOE))
+			 {
+				 //ui_info.cap_pct = 0.0f;
+				 //ui_info.cap_volt = 0.0f;
+				 return 0.0f;
+			 }
+			 else
+			 {
+				 //ui_info.cap_pct = sCap23_info.EBPct;
+				 return gen3Cap_info.relative_EBpct;
 			 }
 		 }
 		 else
