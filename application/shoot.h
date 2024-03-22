@@ -147,8 +147,8 @@ Original PID parameter
 /*2022 infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲发弹set 0.67f*/
 #define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
 //Local heat安全值, 裁判系统离线时的安全值 - 2022步兵 冷却模式一级
-#define LOCAL_HEAT_LIMIT_SAFE_VAL 50
-#define LOCAL_CD_RATE_SAFE_VAL 40
+#define LOCAL_HEAT_LIMIT_SAFE_VAL 280 //50
+#define LOCAL_CD_RATE_SAFE_VAL 25 //40
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
@@ -179,7 +179,7 @@ M3508_RIGHT_FRICTION_PID_MAX_OUT = M3508_LEFT_FRICTION_PID_MAX_OUT = TRIGGER_REA
 
 
 //SZL 5-15-2022 referee speed limit
-#define INITIAL_PROJECTILE_SPEED_LIMIT_17mm 15
+#define INITIAL_PROJECTILE_SPEED_LIMIT_17mm 30
 
 //ICRA 子弹速度上线 为 18m/s
 #define ICRA_PROJECTILE_SPEED_LIMIT 18
