@@ -93,7 +93,7 @@ Hero; 拨盘3个洞, 2pi/3 = 2.094395102f; 为了保证不过冲 set = 2.05f
 1.5PI = 4.712388980f
 2.0PI = 6.283185307f
 */
-#define PI_TEN                      0.60f//0.67f
+#define PI_TEN                      0.698131701f//0.67f
 //2.05f//3.1415926f//0.67f//0.698131701f//3.1415926f//2.094395102f//0.69f//initial 0.314 radian,0.69 is approximately 40 degree
 
 /*仿照云台控制逻辑 新增一个宏定义 电机和转盘安装方向*/
@@ -116,7 +116,7 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  7000.0f
 */
 //拨弹轮电机PID 外环PID
-#define TRIGGER_ANGLE_PID_OUTER_KP        50.0f //40.0f //50.0 //30.0f //25.0f
+#define TRIGGER_ANGLE_PID_OUTER_KP        40.0f //50.0 //30.0f //25.0f
 #define TRIGGER_ANGLE_PID_OUTER_KI        0.0f
 #define TRIGGER_ANGLE_PID_OUTER_KD        5.5f
 
@@ -126,9 +126,9 @@ Original PID parameter
 外环的输出是内环的输入 内环输入单位是rad/s 
 */
 //拨弹轮电机PID  这个是速度环的PID - 600 or 800Kp
-#define TRIGGER_SPEED_IN_PID_KP        650.0f //800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
-#define TRIGGER_SPEED_IN_PID_KI        0.25f //0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
-#define TRIGGER_SPEED_IN_PID_KD        0.1f //TRIGGER_ANGLE_PID_KD
+#define TRIGGER_SPEED_IN_PID_KP        1850.0f //1800.0f //1500.0f //650.0f //800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
+#define TRIGGER_SPEED_IN_PID_KI        0.05f //0.25f //0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
+#define TRIGGER_SPEED_IN_PID_KD        0.0f //0.1f //TRIGGER_ANGLE_PID_KD
 
 #define TRIGGER_BULLET_PID_MAX_OUT  10000.0f
 #define TRIGGER_BULLET_PID_MAX_IOUT 9000.0f//9000.0f 
