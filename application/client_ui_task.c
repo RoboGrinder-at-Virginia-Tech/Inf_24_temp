@@ -270,7 +270,7 @@ static void ui_error_code_update()
 //		strcat(ui_info.shoot_error_code, "R\0");
 //		ui_info.shoot_error_flag = devError;
 //	}
-	if(toe_is_error(TRIGGER_MOTOR17mm_L_TOE) || toe_is_error(TRIGGER_MOTOR17mm_R_TOE)) // 当任意一个出问题时
+	if(toe_is_error(TRIGGER_MOTOR17mm_L_TOE))// || toe_is_error(TRIGGER_MOTOR17mm_R_TOE)) // 当任意一个出问题时
 	{
 		strcat(ui_info.shoot_error_code, "T\0");
 		ui_info.shoot_error_flag = devError;
