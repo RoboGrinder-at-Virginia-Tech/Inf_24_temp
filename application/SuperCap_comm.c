@@ -328,7 +328,11 @@ uint16_t get_superCap_charge_pwr() //仅功率控制使用
 /*下面两个函数; 0->normal/online; 1->error/offline*/
 bool_t current_superCap_is_offline()
 {
-	if(current_superCap == sCap23_ID) //SuperCap_ID
+	if (current_superCap == gen3Cap_ID)
+	{
+		return toe_is_error(GEN3CAP_TOE);
+	}
+	else if(current_superCap == sCap23_ID) //SuperCap_ID
 	{
 		return toe_is_error(SCAP_23_TOR); //SUPERCAP_TOE
 	}

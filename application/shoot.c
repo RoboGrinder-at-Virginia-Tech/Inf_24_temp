@@ -278,7 +278,7 @@ int16_t shoot_control_loop(void)
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
 //        //设置拨弹轮的拨动速度,并开启堵转反转处理 5-31-2023前老代码
-        shoot_control.trigger_speed_set = 5.5f; //(8.0f/9.0f)*(2.0f*PI);
+        shoot_control.trigger_speed_set = 8.37f; //6.25f; //5.5f; //(8.0f/9.0f)*(2.0f*PI);
 			  //5.5f; //CONTINUE_TRIGGER_SPEED; //角速度
 			
         trigger_motor_turn_back_17mm();

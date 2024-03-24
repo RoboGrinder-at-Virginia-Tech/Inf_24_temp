@@ -149,7 +149,7 @@ SZL 5-21-2022 重新算
 #define SLOW_SPEED 1.7f	//5-24-2022之前 1.4f //低速 模式速度
 #define SLOW_ACC_STEP 0.015f //油门步进（加速度控制）
 #define SLOW_INT_SPEED 0.1f //初始加速值（降低加速迟	滞）
-#define SPIN_SPEED 4.0f //3.3f 3.0f //小陀螺速度
+#define SPIN_SPEED 8.00f //9.42f //12.56f //6.66f //5.0f //4.0f //3.3f 3.0f //小陀螺速度
 /*
 7-4-2023: 基于之前测试:
 #define SPIN_SPEED 3.0f - 小陀螺时不会消耗太多功率
