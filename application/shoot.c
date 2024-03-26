@@ -343,7 +343,7 @@ int16_t shoot_control_loop(void)
     }
     else
     {
-        shoot_laser_on(); //激光开启
+//        shoot_laser_on(); //激光开启
 			
 //				//5-27-2023增加串级PID----
 //			  if(shoot_control.block_flag == 0)
