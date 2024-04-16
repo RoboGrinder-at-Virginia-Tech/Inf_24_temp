@@ -63,4 +63,18 @@ extern fp32 AHRS_tanf(fp32 angle);
 extern fp32 AHRS_asinf(fp32 sin);
 extern fp32 AHRS_acosf(fp32 cos);
 extern fp32 AHRS_atan2f(fp32 y, fp32 x);
+
+/*11-11: 操作四元数*/
+
+typedef struct {
+    fp32 w, x, y, z;
+} Quaternion;
+
+typedef struct {
+    fp32 roll, pitch, yaw;
+} Euler;
+
+Euler Quaternion_to_Euler(Quaternion q);
+Quaternion Euler_to_Quaternion(Euler angles);
+Quaternion RemovePitch(Quaternion q);
 #endif

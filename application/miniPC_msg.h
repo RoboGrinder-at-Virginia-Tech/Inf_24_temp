@@ -8,6 +8,7 @@
 #include "gimbal_task.h"
 #include "shoot.h"
 #include "odometer_task.h"
+#include "AHRS_middleware.h"
 
 /*---------------------------------------------------- Raw Data Msg ----------------------------------------------------*/
 //robot_id_t is defined in referee.h file
@@ -55,10 +56,10 @@ miniPC to control the robot's chassis - miniPC->Embeded
 */
 typedef enum
 {
-   PC_CHASSIS_NO_FOLLOW_YAW, //uint8_t 0
-   PC_CHASSIS_FOLLOW_GIMBAL_YAW, //uint8_t 1
-   PC_CHASSIS_SPIN, //uint8_t 2
-} pc_chassis_mode_e;
+   PC_BASE_CHASSIS_NO_FOLLOW_YAW=0, //uint8_t 0
+   PC_BASE_CHASSIS_FOLLOW_GIMBAL_YAW=1, //uint8_t 1
+   PC_BASE_CHASSIS_SPIN=2, //uint8_t 2
+} pc_base_chassis_mode_e;
 typedef __packed struct
 {
   int16_t vx_mm_wrt_gimbal; // forward/back
@@ -68,9 +69,9 @@ typedef __packed struct
   int16_t vw_mm; // ccw positive
 //vw_mm: radian/s * 1000
 
- //pc_chassis_mode_e chassis_mode;
+ //base_chassis_mode_e chassis_mode;
   uint8_t chassis_mode;
-}pc_cmd_chassis_control_t; //CHASSIS_REL_CTRL_CMD_ID
+}pc_cmd_base_control_t; //CHASSIS_REL_CTRL_CMD_ID
 
 /*
 chassis related info. Send to PC
@@ -220,6 +221,13 @@ typedef struct
   fp32 pitch_absolute_angle;
 
 	fp32 quat[4];
+	Quaternion quat_temp;
+	
+	//filter pitch
+	Euler ang_filter_pit;
+	Quaternion quat_filter_pit;
+	Euler fil_quat_to_ang_debug_Euler;
+	fp32 fil_quat_to_ang_debug_fp[3]; //roll-pitch-yaw order
 
   fp32 shoot_bullet_speed; // = m/s
 
@@ -248,7 +256,7 @@ typedef struct
 	fp32 vy_m; // m/s
 	fp32 vw_m; // radian/s
 	
-	pc_chassis_mode_e chassis_mode;
+	pc_base_chassis_mode_e chassis_mode;
 	
 	//gimbal related: pc_cmd_gimbal_ctrl_t
 	fp32 yawMove_aid;
@@ -307,6 +315,12 @@ uint8_t get_shootCommand(void);
 uint8_t get_cv_gimbal_sts(void);
 fp32 get_aim_pos_dis(void);
 uint8_t get_autoAimFlag(void);
+
+//miniPC base control
+void get_base_ctrl_vx_vy_wrt_gimbal(fp32* vx_out, fp32* vy_out);
+fp32 get_base_ctrl_vx_wrt_gimbal(void);
+fp32 get_base_ctrl_vy_wrt_gimbal(void);
+fp32 get_base_ctrl_yaw_aid(void);
 
 //declear setter method
 void set_autoAimFlag(uint8_t autoAimFlag);

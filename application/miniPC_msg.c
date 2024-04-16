@@ -31,6 +31,7 @@
 #include "SuperCap_comm.h"
 #include "referee.h"
 #include "arm_math.h"
+#include "AHRS_MiddleWare.h"
 
 extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 
@@ -42,7 +43,7 @@ embed_send_protocol_t embed_send_protocol;
 //消息实体 原始数据, raw origial data
 //miniPC -> Embedded
 pc_ui_msg_t pc_ui_msg;
-pc_cmd_chassis_control_t pc_cmd_chassis_control;
+pc_cmd_base_control_t pc_cmd_base_control;
 pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_aid;
 pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_full;
 //processed cmd
@@ -77,7 +78,7 @@ void init_pc_to_embed_Main_comm_struct_data(void)
 	memset(&pc_send_header, 0, sizeof(pc_comm_embed_send_header_t));
 	
 	memset(&pc_ui_msg, 0, sizeof(pc_ui_msg_t));
-	memset(&pc_cmd_chassis_control, 0, sizeof(pc_cmd_chassis_control_t));
+	memset(&pc_cmd_base_control, 0, sizeof(pc_cmd_base_control_t));
 	memset(&pc_cmd_gimbal_ctrl_aid, 0, sizeof(pc_cmd_gimbal_ctrl_t));
 	memset(&pc_cmd_gimbal_ctrl_full, 0, sizeof(pc_cmd_gimbal_ctrl_t));
 	
@@ -91,6 +92,7 @@ void init_pc_to_embed_Main_comm_struct_data(void)
 	first_order_filter_init(&pc_info.yawMove_aid_filter, MINIPC_AID_GIMBAL_CONTROL_MSG_TIME, yawMove_aid_order_filter);
 	
 }
+
 //embed -> pc
 void init_embed_to_pc_comm_struct_data(void)
 {
@@ -233,29 +235,54 @@ uint8_t get_autoAimFlag()
 	return pc_info.autoAimFlag;
 }
 
+void get_base_ctrl_vx_vy_wrt_gimbal(fp32* vx_out, fp32* vy_out)
+{
+	if(vx_out== NULL || vy_out == NULL)
+	{
+		return;
+	}
+	
+	*vx_out = pc_info.vx_m;
+	*vy_out = pc_info.vx_m;
+}
+
+fp32 get_base_ctrl_vx_wrt_gimbal()
+{
+	return pc_info.vx_m;
+}
+
+fp32 get_base_ctrl_vy_wrt_gimbal()
+{
+	return pc_info.vy_m;
+}
+
+fp32 get_base_ctrl_yaw_aid()
+{
+	return pc_info.vw_m * 0.0000055f;
+}
 /* ---------- getter method end ---------- */
 
 void cmd_process_pc_cmd_chassis_control(void)
 {
-	pc_info.vx_m = (fp32)pc_cmd_chassis_control.vx_mm_wrt_gimbal / 1000.0f;
-	pc_info.vy_m = (fp32)pc_cmd_chassis_control.vy_mm_wrt_gimbal / 1000.0f;
-	pc_info.vw_m = (fp32)pc_cmd_chassis_control.vw_mm / 1000.0f;
+	pc_info.vx_m = (fp32)pc_cmd_base_control.vx_mm_wrt_gimbal / 1000.0f;
+	pc_info.vy_m = (fp32)pc_cmd_base_control.vy_mm_wrt_gimbal / 1000.0f;
+	pc_info.vw_m = (fp32)pc_cmd_base_control.vw_mm / 1000.0f;
 	
-	if(pc_cmd_chassis_control.chassis_mode == 0)
+	if(pc_cmd_base_control.chassis_mode == 0)
 	{
-		pc_info.chassis_mode = PC_CHASSIS_NO_FOLLOW_YAW;
+		pc_info.chassis_mode = PC_BASE_CHASSIS_NO_FOLLOW_YAW;
 	}
-	else if(pc_cmd_chassis_control.chassis_mode == 1)
+	else if(pc_cmd_base_control.chassis_mode == 1)
 	{
-		pc_info.chassis_mode = PC_CHASSIS_FOLLOW_GIMBAL_YAW;
+		pc_info.chassis_mode = PC_BASE_CHASSIS_FOLLOW_GIMBAL_YAW;
 	}
-	else if(pc_cmd_chassis_control.chassis_mode == 2)
+	else if(pc_cmd_base_control.chassis_mode == 2)
 	{
-		pc_info.chassis_mode = PC_CHASSIS_SPIN;
+		pc_info.chassis_mode = PC_BASE_CHASSIS_SPIN;
 	}
 	else
 	{
-		pc_info.chassis_mode = PC_CHASSIS_NO_FOLLOW_YAW;
+		pc_info.chassis_mode = PC_BASE_CHASSIS_NO_FOLLOW_YAW;
 	}
 	
 }
@@ -322,18 +349,20 @@ void pc_comm_data_solve(uint8_t *frame)
 
     switch (cmd_id)
     {
-        case CHASSIS_REL_CTRL_CMD_ID:
+				case CHASSIS_REL_CTRL_CMD_ID:
         {
-            memcpy(&pc_cmd_chassis_control, frame + index, sizeof(pc_cmd_chassis_control_t));
+            memcpy(&pc_cmd_base_control, frame + index, sizeof(pc_cmd_base_control_t));
 						cmd_process_pc_cmd_chassis_control();
         }
         break;
+				
         case GIMBAL_REL_AID_CTRL_CMD_ID:
         {
             memcpy(&pc_cmd_gimbal_ctrl_aid, frame + index, sizeof(pc_cmd_gimbal_ctrl_t));
 					  cmd_process_pc_cmd_gimbal_ctrl_aid();
         }
         break;
+				
         case GIMBAL_REL_FULL_CTRL_CMD_ID:
         {
             memcpy(&pc_cmd_gimbal_ctrl_full, frame + index, sizeof(pc_cmd_gimbal_ctrl_t));
@@ -370,22 +399,6 @@ bool_t pc_is_data_error_proc()
 /* -------------------------------- USART SEND DATA FILL-------------------------------- */
 void embed_all_info_update_from_sensor()
 {
-	/*
-	fp32 s_vx_m; // m/s
-	fp32 s_vy_m; // m/s
-	fp32 s_vw_m; // radian/s
-	
-	uint8_t energy_buff_pct; //get_superCap_charge_pwr
-	
-	fp32 yaw_relative_angle; //= rad
-  fp32 pitch_relative_angle;
-
-	fp32 quat[4];
-
-  fp32 shoot_bullet_speed; // = m/s
-
-  uint8_t robot_id;
-	*/
 	embed_msg_to_pc.vx_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vx_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vx;
 	embed_msg_to_pc.vy_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vy_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vy;
 	embed_msg_to_pc.vw_wrt_chassis = embed_msg_to_pc.chassis_move_ptr->wz;
@@ -404,10 +417,47 @@ void embed_all_info_update_from_sensor()
 	embed_msg_to_pc.yaw_absolute_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_yaw_motor.absolute_angle; //6-22修改relative_angle
 	embed_msg_to_pc.pitch_absolute_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_pitch_motor.absolute_angle; //relative_angle
 	
-	embed_msg_to_pc.quat[0] = embed_msg_to_pc.quat_ptr[0];
-	embed_msg_to_pc.quat[1] = embed_msg_to_pc.quat_ptr[1];
-	embed_msg_to_pc.quat[2] = embed_msg_to_pc.quat_ptr[2];
-	embed_msg_to_pc.quat[3] = embed_msg_to_pc.quat_ptr[3];
+	//original quat -- directly from gimbal
+	/*
+	#define INS_QUAT_YAW_ADDRESS_OFFSET    3
+	#define INS_QUAT_PITCH_ADDRESS_OFFSET  2
+	#define INS_QUAT_ROLL_ADDRESS_OFFSET   1
+	#define INS_QUAT_INDEX0 0
+	*/
+	// 4-15-2023 在这里, 统一把四元数换位tf2标准, 即xyzw顺序
+	embed_msg_to_pc.quat[0] = embed_msg_to_pc.quat_ptr[1]; //x
+	embed_msg_to_pc.quat[1] = embed_msg_to_pc.quat_ptr[2]; //y
+	embed_msg_to_pc.quat[2] = embed_msg_to_pc.quat_ptr[3]; //x
+	embed_msg_to_pc.quat[3] = embed_msg_to_pc.quat_ptr[0]; //w
+	
+	//filter out pitch for base info
+	embed_msg_to_pc.quat_temp.w = embed_msg_to_pc.quat[3];
+	embed_msg_to_pc.quat_temp.x = embed_msg_to_pc.quat[0];
+	embed_msg_to_pc.quat_temp.y = embed_msg_to_pc.quat[1];
+	embed_msg_to_pc.quat_temp.z = embed_msg_to_pc.quat[2];
+	
+	embed_msg_to_pc.ang_filter_pit = Quaternion_to_Euler(embed_msg_to_pc.quat_temp);
+	// 将pitch角度设置为0
+	embed_msg_to_pc.ang_filter_pit.pitch = 0.0f;
+	// 将修改后的欧拉角转换回四元数
+	embed_msg_to_pc.quat_filter_pit = Euler_to_Quaternion(embed_msg_to_pc.ang_filter_pit);
+	
+	//调试
+	embed_msg_to_pc.fil_quat_to_ang_debug_Euler = Quaternion_to_Euler(embed_msg_to_pc.quat_filter_pit);
+	/*
+	  *yaw = atan2f(2.0f*(q[0]*q[3]+q[1]*q[2]), 2.0f*(q[0]*q[0]+q[1]*q[1])-1.0f);
+    *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]));
+    *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f);
+	*/
+	fp32 q[4]; // this locally temp debug value is in wxyz order copy of robot code
+	q[0] = embed_msg_to_pc.quat_filter_pit.w;
+	q[1] = embed_msg_to_pc.quat_filter_pit.x;
+	q[2] = embed_msg_to_pc.quat_filter_pit.y;
+	q[3] = embed_msg_to_pc.quat_filter_pit.z;
+	//fil_quat_to_ang_debug_fp[0]-roll; [1]-pitch, [2]-yaw
+	embed_msg_to_pc.fil_quat_to_ang_debug_fp[2] = atan2f(2.0f*(q[0]*q[3]+q[1]*q[2]), 2.0f*(q[0]*q[0]+q[1]*q[1])-1.0f);
+	embed_msg_to_pc.fil_quat_to_ang_debug_fp[1] = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]));
+	embed_msg_to_pc.fil_quat_to_ang_debug_fp[0] = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f);
 	
 	// = (uint16_t)(shoot_control.predict_shoot_speed*10); //anticipated predicated bullet speed
 	embed_msg_to_pc.shoot_bullet_speed = embed_msg_to_pc.shoot_control_ptr->predict_shoot_speed;
@@ -439,15 +489,21 @@ void embed_base_info_msg_data_update(embed_base_info_t* embed_base_info_ptr, emb
 	//10-28新增底盘里程计 Pose Message miniPC needs https://docs.ros2.org/latest/api/geometry_msgs/msg/Pose.html
 	
 	//Point Message
-	embed_base_info_ptr->odom_coord_x_mm = (int16_t) (embed_msg_to_pc_ptr->odom_coord_x * 1000.0f);
-	embed_base_info_ptr->odom_coord_y_mm = (int16_t) (embed_msg_to_pc_ptr->odom_coord_y * 1000.0f);
-	embed_base_info_ptr->odom_coord_z_mm = 0; //(int16_t) (embed_msg_to_pc_ptr->odom_coord_z * 1000.0f);
+	embed_base_info_ptr->odom_coord_x_mm = (int32_t) (embed_msg_to_pc_ptr->odom_coord_x * 1000.0f);
+	embed_base_info_ptr->odom_coord_y_mm = (int32_t) (embed_msg_to_pc_ptr->odom_coord_y * 1000.0f);
+	embed_base_info_ptr->odom_coord_z_mm = 0; //(int32_t) (embed_msg_to_pc_ptr->odom_coord_z * 1000.0f);
 	
 	//Quaternion Message in x y z w order - quat sync with base information
-	embed_base_info_ptr->quat[3] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[0]+1) * 10000.0f ); //(quat[i]+1)*10000; linear trans.
-	embed_base_info_ptr->quat[0] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[1]+1) * 10000.0f );
-	embed_base_info_ptr->quat[1] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[2]+1) * 10000.0f );
-	embed_base_info_ptr->quat[2] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[3]+1) * 10000.0f );
+	//Not filtered pitch
+//	embed_base_info_ptr->quat[3] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[0]+1) * 10000.0f ); //(quat[i]+1)*10000; linear trans.
+//	embed_base_info_ptr->quat[0] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[1]+1) * 10000.0f );
+//	embed_base_info_ptr->quat[1] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[2]+1) * 10000.0f );
+//	embed_base_info_ptr->quat[2] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[3]+1) * 10000.0f );
+	//Filtered pitch
+	embed_base_info_ptr->quat[0] = (uint16_t) ( (embed_msg_to_pc_ptr->quat_filter_pit.x+1) * 10000.0f ); //(quat[i]+1)*10000; linear trans.
+	embed_base_info_ptr->quat[1] = (uint16_t) ( (embed_msg_to_pc_ptr->quat_filter_pit.y+1) * 10000.0f );
+	embed_base_info_ptr->quat[2] = (uint16_t) ( (embed_msg_to_pc_ptr->quat_filter_pit.z+1) * 10000.0f );
+	embed_base_info_ptr->quat[3] = (uint16_t) ( (embed_msg_to_pc_ptr->quat_filter_pit.w+1) * 10000.0f );
 	
 	// check that quat is a valid nuumber
 	for(uint8_t i = 0; i < 4; i++)
