@@ -612,7 +612,7 @@ static void shoot_set_mode(void)
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
-					else if( ( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) )
+					else if(1)// ( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) )
 					{
 						shoot_control.shoot_mode = SHOOT_3_BULLET;
 						shoot_control.burst_counter = 0;
