@@ -235,8 +235,9 @@ typedef enum
     SHOOT_READY_BULLET,  //2
     SHOOT_READY,         //3
     SHOOT_BULLET,        //4
-    SHOOT_CONTINUE_BULLET,  //5
-    SHOOT_DONE,          //6
+	  SHOOT_3_BULLET, 				 //5
+    SHOOT_CONTINUE_BULLET,  //6
+    SHOOT_DONE,          //7
 } shoot_mode_e;
 
 //SZL 12-30-2021 添加 fric 电机 M3508 数据解包 待打包发送数据 结构体
@@ -359,6 +360,9 @@ typedef struct
 		uint32_t rt_odom_calculated_bullets_fired; // 已经计算过热量的子弹量
 
 		fp32 rt_odom_local_heat[4]; //本地热量 [0] 当前 [1]上一次 [2]上上次 受到射频影响		
+		
+		uint8_t burst_counter;  // Counter for burst shots
+    uint32_t burst_start_time;  // Start time of the burst
 } shoot_control_t;
 
 //shoot motor 是 拨弹轮 M2006 motor

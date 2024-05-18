@@ -75,7 +75,7 @@ static void trigger_motor_turn_back_17mm(void); //有绝对位置环退弹
   * @param[in]      void
   * @retval         void
   */
-static void shoot_bullet_control_absolute_17mm(void);
+static void shoot_bullet_control_absolute_17mm(uint8_t steps);
 static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq);
 uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat);
 
@@ -273,7 +273,7 @@ int16_t shoot_control_loop(void)
     {
         shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
         shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
-        shoot_bullet_control_absolute_17mm();
+        shoot_bullet_control_absolute_17mm(1); // single shot
     }
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
@@ -305,6 +305,25 @@ int16_t shoot_control_loop(void)
 //					{
 //					}
 //				}
+    }
+		else if (shoot_control.shoot_mode == SHOOT_3_BULLET)
+    {
+        if (xTaskGetTickCount() - shoot_control.burst_start_time <= 100) //BURST_PERIOD
+        {
+            if (shoot_control.burst_counter < 3)
+            {
+                shoot_bullet_control_absolute_17mm(3); // Burst of 3 shots
+                shoot_control.burst_counter += 3;
+            }
+            else
+            {
+                shoot_control.shoot_mode = SHOOT_READY_BULLET;
+            }
+        }
+        else
+        {
+            shoot_control.shoot_mode = SHOOT_READY_BULLET;
+        }
     }
     else if(shoot_control.shoot_mode == SHOOT_DONE)
     {
@@ -588,10 +607,16 @@ static void shoot_set_mode(void)
 			
 				if(shoot_control.user_fire_ctrl==user_SHOOT_SEMI)
 				{
-					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0))|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
-					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) )|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					
+					if ( (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME) )
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
+					}
+					else if( ( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) )
+					{
+						shoot_control.shoot_mode = SHOOT_3_BULLET;
+						shoot_control.burst_counter = 0;
+            shoot_control.burst_start_time = xTaskGetTickCount();
 					}
 					else if(shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
 					{
@@ -601,9 +626,15 @@ static void shoot_set_mode(void)
 				else if(shoot_control.user_fire_ctrl==user_SHOOT_AUTO)
 				{
 					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.press_l ))
-					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.press_l ))
+					if ( (shoot_control.press_l ) )
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
+					}
+					else if(( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ))
+					{
+						shoot_control.shoot_mode = SHOOT_3_BULLET;
+						shoot_control.burst_counter = 0;
+            shoot_control.burst_start_time = xTaskGetTickCount();
 					}
 					else if(shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
 					{
@@ -935,7 +966,7 @@ static void trigger_motor_turn_back_17mm(void)
   * @param[in]      void
   * @retval         void
   */
-static void shoot_bullet_control_absolute_17mm(void)
+static void shoot_bullet_control_absolute_17mm(uint8_t steps)
 {
 	  //每次拨动 120度 的角度
     if (shoot_control.move_flag == 0)
@@ -943,9 +974,9 @@ static void shoot_bullet_control_absolute_17mm(void)
 				/*一次只能执行一次发射任务, 第一次发射任务请求完成后, 还未完成时, 请求第二次->不会执行第二次发射
 				一次拨一个单位
         */
-				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+				shoot_control.set_angle = (shoot_control.angle + steps * PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
-			  shoot_control.total_bullets_fired++; //
+			  shoot_control.total_bullets_fired += steps;
 			  shoot_control.local_heat += ONE17mm_BULLET_HEAT_AMOUNT;
     }
 		
