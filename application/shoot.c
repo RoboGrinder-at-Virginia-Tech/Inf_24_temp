@@ -167,7 +167,7 @@ void shoot_init(void)
 
 int16_t shoot_control_loop(void)
 {
-	  shoot_laser_on();
+//	  shoot_laser_on(); //常开
 
     shoot_set_mode();        //设置状态机
     shoot_feedback_update(); //更新数据
@@ -337,7 +337,7 @@ int16_t shoot_control_loop(void)
 
     if(shoot_control.shoot_mode == SHOOT_STOP)
     {
-//        shoot_laser_off();
+        shoot_laser_off();
         shoot_control.given_current = 0;
 				//位置环PID 输入参数重置
 				shoot_control.set_angle = shoot_control.angle;
