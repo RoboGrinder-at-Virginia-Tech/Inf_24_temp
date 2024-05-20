@@ -85,7 +85,7 @@ shoot_control_t shoot_control;          //射击数据
 int16_t temp_rpm_left;
 int16_t temp_rpm_right;
 
-fp32 temp_speed_setALL = 22; //23; //14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
+fp32 temp_speed_setALL = 21.0f; //23; //14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
 
 /**
   * @brief          射击初始化，初始化PID，遥控器指针，电机指针
@@ -213,16 +213,16 @@ int16_t shoot_control_loop(void)
 	 //shoot_control.referee_current_shooter_17mm_speed_limit = 18;//强制使其=18 用于调试-----------------------------------------------------------------------------------------------
 	 if(shoot_control.referee_current_shooter_17mm_speed_limit == 30)
 	 {
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(22.0f);//待定----------------------------
-		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(21.0f);//待定----------------------------
+		 shoot_control.predict_shoot_speed = 26.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 		 /*1) 发给ZYZ那 15.5 测出来14.5
 		   2) 发给ZYZ那 14.0 测出来 14.0
 		 */
 	 }
 	 else
 	 {//默认射速15
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(22.0f);//待定-----------------------------
-		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(21.0f);//待定-----------------------------
+		 shoot_control.predict_shoot_speed = 26.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
 //	 else if(shoot_control.referee_current_shooter_17mm_speed_limit == 18)
@@ -237,7 +237,7 @@ int16_t shoot_control_loop(void)
 	 
 	 //弹速测试 12-28 ---- this section only for debug
 	 shoot_control.currentLIM_shoot_speed_17mm = (fp32)temp_speed_setALL;
-	 shoot_control.predict_shoot_speed = 28.0f;
+	 shoot_control.predict_shoot_speed = 26.0f;
 	 
     if (shoot_control.shoot_mode == SHOOT_STOP)
     {
