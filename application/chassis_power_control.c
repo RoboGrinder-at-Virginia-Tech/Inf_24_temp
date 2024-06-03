@@ -60,7 +60,7 @@ void superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power
 		}
 		
 		//从裁判系统获取当前缓冲能量
-		get_chassis_power_and_buffer(&chassis_e_ctrl.chassis_power, &chassis_e_ctrl.chassis_power_buffer);//不重要
+		cpc_get_chassis_power_and_buffer(&chassis_e_ctrl.chassis_power, &chassis_e_ctrl.chassis_power_buffer);//不重要
 		//识别 并处理 chassis_power 和 chassis_power_buffer 不合理数值；--- SZL: 暂时不处理 --- 且这下数据对有超级电容来说 不是很重要
 		
 		//从 超级电容 获取当前剩余能量 获取当前使用的超级电容的剩余能量
@@ -296,7 +296,7 @@ void speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control)
 		}
 		
 		//从裁判系统获取当前缓冲能量
-		get_chassis_power_and_buffer(&direct_connect_e_cont.chassis_power, &direct_connect_e_cont.chassis_power_buffer);
+		cpc_get_chassis_power_and_buffer(&direct_connect_e_cont.chassis_power, &direct_connect_e_cont.chassis_power_buffer);
 		
 		//识别 并处理 chassis_power 和 chassis_power_buffer 不合理数值；--- SZL: 暂时不处理 ---
 		
@@ -704,7 +704,7 @@ void chassis_power_control(chassis_move_t *chassis_power_control)
 		}
 		
 		//从裁判系统获取当前缓冲能量
-		get_chassis_power_and_buffer(&direct_connect_e_cont.chassis_power, &direct_connect_e_cont.chassis_power_buffer);
+		cpc_get_chassis_power_and_buffer(&direct_connect_e_cont.chassis_power, &direct_connect_e_cont.chassis_power_buffer);
 		
 		//识别 并处理 chassis_power 和 chassis_power_buffer 不合理数值；--- SZL: 暂时不处理 ---
 		
@@ -747,7 +747,7 @@ void chassis_power_control(chassis_move_t *chassis_power_control)
 			}
 			else
 			{
-	//        get_chassis_power_and_buffer(&direct_connect_e_cont.chassis_power, &direct_connect_e_cont.chassis_power_buffer);
+	//        cpc_get_chassis_power_and_buffer(&direct_connect_e_cont.chassis_power, &direct_connect_e_cont.chassis_power_buffer);
 					// power > 80w and buffer < 60j, because buffer < 60 means power has been more than 80w
 					//功率超过80w 和缓冲能量小于60j,因为缓冲能量小于60意味着功率超过80w
 					/* 举例 步兵机器人或英雄机器人未触发飞坡增益时，缓冲能量上限为 60J

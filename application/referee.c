@@ -8,25 +8,24 @@
 frame_header_struct_t referee_receive_header;
 frame_header_struct_t referee_send_header;
 
-ext_game_state_t game_state;
-ext_game_result_t game_result;
-ext_game_robot_HP_t game_robot_HP_t;
+game_status_t game_state;
+game_result_t game_result;
+game_robot_HP_t game_robot_HP;
 
-ext_event_data_t field_event;
-ext_supply_projectile_action_t supply_projectile_action_t;
-ext_supply_projectile_booking_t supply_projectile_booking_t;
-ext_referee_warning_t referee_warning_t;
+event_data_t field_event;
+ext_supply_projectile_action_t supply_projectile_action;
+referee_warning_t referee_warning;
 
 
-ext_game_robot_status_t robot_state;//------------
-ext_power_heat_data_t power_heat_data_t;
-ext_game_robot_pos_t game_robot_pos_t;
-ext_buff_t buff_musk_t;
-aerial_robot_energy_t robot_energy_t;
-ext_robot_hurt_t robot_hurt_t;
-ext_shoot_data_t shoot_data_t;
-ext_bullet_remaining_t bullet_remaining_t;
-ext_student_interactive_header_data_t student_interactive_data_t;
+robot_status_t robot_status;
+power_heat_data_t power_heat_data;
+robot_pos_t robot_pos;
+buff_t robot_buff;
+air_support_data_t air_support_data;
+hurt_data_t hurt_data;
+shoot_data_t shoot_data;
+projectile_allowance_t projectile_allowance;
+robot_interaction_data_t robot_interaction_data;
 
 
 uint32_t last_robot_state_rx_timestamp; //上一次收到robot_state信息的时间戳
@@ -36,28 +35,27 @@ void init_referee_struct_data(void)
     memset(&referee_receive_header, 0, sizeof(frame_header_struct_t));
     memset(&referee_send_header, 0, sizeof(frame_header_struct_t));
 
-    memset(&game_state, 0, sizeof(ext_game_state_t));
-    memset(&game_result, 0, sizeof(ext_game_result_t));
-    memset(&game_robot_HP_t, 0, sizeof(ext_game_robot_HP_t));
+    memset(&game_state, 0, sizeof(game_status_t));
+    memset(&game_result, 0, sizeof(game_result_t));
+    memset(&game_robot_HP, 0, sizeof(game_robot_HP_t));
 
 
-    memset(&field_event, 0, sizeof(ext_event_data_t));
-    memset(&supply_projectile_action_t, 0, sizeof(ext_supply_projectile_action_t));
-    memset(&supply_projectile_booking_t, 0, sizeof(ext_supply_projectile_booking_t));
-    memset(&referee_warning_t, 0, sizeof(ext_referee_warning_t));
+    memset(&field_event, 0, sizeof(event_data_t));
+    memset(&supply_projectile_action, 0, sizeof(ext_supply_projectile_action_t));
+    memset(&referee_warning, 0, sizeof(referee_warning_t));
 
 
-    memset(&robot_state, 0, sizeof(ext_game_robot_status_t));
-    memset(&power_heat_data_t, 0, sizeof(ext_power_heat_data_t));
-    memset(&game_robot_pos_t, 0, sizeof(ext_game_robot_pos_t));
-    memset(&buff_musk_t, 0, sizeof(ext_buff_t));
-    memset(&robot_energy_t, 0, sizeof(aerial_robot_energy_t));
-    memset(&robot_hurt_t, 0, sizeof(ext_robot_hurt_t));
-    memset(&shoot_data_t, 0, sizeof(ext_shoot_data_t));
-    memset(&bullet_remaining_t, 0, sizeof(ext_bullet_remaining_t));
+    memset(&robot_status, 0, sizeof(robot_status_t));
+    memset(&power_heat_data, 0, sizeof(power_heat_data_t));
+    memset(&robot_pos, 0, sizeof(robot_pos_t));
+    memset(&robot_buff, 0, sizeof(buff_t));
+    memset(&air_support_data, 0, sizeof(air_support_data_t));
+    memset(&hurt_data, 0, sizeof(hurt_data_t));
+    memset(&shoot_data, 0, sizeof(shoot_data_t));
+    memset(&projectile_allowance, 0, sizeof(projectile_allowance_t));
 
 
-    memset(&student_interactive_data_t, 0, sizeof(ext_student_interactive_header_data_t));
+    memset(&robot_interaction_data, 0, sizeof(robot_interaction_data_t));
 
 
 
@@ -78,9 +76,9 @@ void referee_data_solve(uint8_t *frame)
 
     switch (cmd_id)
     {
-        case GAME_STATE_CMD_ID:
+        case GAME_STATUS_CMD_ID:
         {
-            memcpy(&game_state, frame + index, sizeof(ext_game_state_t));
+            memcpy(&game_state, frame + index, sizeof(game_status_t));
         }
         break;
         case GAME_RESULT_CMD_ID:
@@ -90,7 +88,7 @@ void referee_data_solve(uint8_t *frame)
         break;
         case GAME_ROBOT_HP_CMD_ID:
         {
-            memcpy(&game_robot_HP_t, frame + index, sizeof(ext_game_robot_HP_t));
+            memcpy(&game_robot_HP, frame + index, sizeof(game_robot_HP_t));
         }
         break;
 
@@ -102,64 +100,59 @@ void referee_data_solve(uint8_t *frame)
         break;
         case SUPPLY_PROJECTILE_ACTION_CMD_ID:
         {
-            memcpy(&supply_projectile_action_t, frame + index, sizeof(supply_projectile_action_t));
-        }
-        break;
-        case SUPPLY_PROJECTILE_BOOKING_CMD_ID:
-        {
-            memcpy(&supply_projectile_booking_t, frame + index, sizeof(supply_projectile_booking_t));
+            memcpy(&supply_projectile_action, frame + index, sizeof(ext_supply_projectile_action_t));
         }
         break;
         case REFEREE_WARNING_CMD_ID:
         {
-            memcpy(&referee_warning_t, frame + index, sizeof(ext_referee_warning_t));
+            memcpy(&referee_warning, frame + index, sizeof(referee_warning_t));
         }
         break;
 
-        case ROBOT_STATE_CMD_ID:
+        case ROBOT_STATUS_CMD_ID:
         {
-            memcpy(&robot_state, frame + index, sizeof(robot_state));
+            memcpy(&robot_status, frame + index, sizeof(robot_status_t));
 						last_robot_state_rx_timestamp = xTaskGetTickCount();
         }
         break;
         case POWER_HEAT_DATA_CMD_ID:
         {
-            memcpy(&power_heat_data_t, frame + index, sizeof(power_heat_data_t));
+            memcpy(&power_heat_data, frame + index, sizeof(power_heat_data_t));
         }
         break;
         case ROBOT_POS_CMD_ID:
         {
-            memcpy(&game_robot_pos_t, frame + index, sizeof(game_robot_pos_t));
+            memcpy(&robot_pos, frame + index, sizeof(robot_pos_t));
         }
         break;
-        case BUFF_MUSK_CMD_ID:
+        case BUFF_CMD_ID:
         {
-            memcpy(&buff_musk_t, frame + index, sizeof(buff_musk_t));
+            memcpy(&robot_buff, frame + index, sizeof(buff_t));
         }
         break;
-        case AERIAL_ROBOT_ENERGY_CMD_ID:
+        case AIR_SUPPORT_DATA_CMD_ID:
         {
-            memcpy(&robot_energy_t, frame + index, sizeof(robot_energy_t));
+            memcpy(&air_support_data, frame + index, sizeof(air_support_data_t));
         }
         break;
-        case ROBOT_HURT_CMD_ID:
+        case HURT_DATA_CMD_ID:
         {
-            memcpy(&robot_hurt_t, frame + index, sizeof(robot_hurt_t));
+            memcpy(&hurt_data, frame + index, sizeof(hurt_data_t));
         }
         break;
         case SHOOT_DATA_CMD_ID:
         {
-            memcpy(&shoot_data_t, frame + index, sizeof(shoot_data_t));
+            memcpy(&shoot_data, frame + index, sizeof(shoot_data_t));
         }
         break;
-        case BULLET_REMAINING_CMD_ID:
+        case PROJECTILE_ALLOWANCE_CMD_ID:
         {
-            memcpy(&bullet_remaining_t, frame + index, sizeof(ext_bullet_remaining_t));
+            memcpy(&projectile_allowance, frame + index, sizeof(projectile_allowance_t));
         }
         break;
-        case STUDENT_INTERACTIVE_DATA_CMD_ID:
+        case ROBOT_INTERACTION_DATA_CMD_ID:
         {
-            memcpy(&student_interactive_data_t, frame + index, sizeof(student_interactive_data_t));
+            memcpy(&robot_interaction_data, frame + index, sizeof(robot_interaction_data_t));
         }
         break;
         default:
@@ -169,21 +162,26 @@ void referee_data_solve(uint8_t *frame)
     }
 }
 
-void get_chassis_power_and_buffer(fp32 *power, fp32 *buffer)
+void cpc_get_chassis_power_and_buffer(fp32 *power, fp32 *buffer)
 {
-    *power = power_heat_data_t.chassis_power;
-    *buffer = power_heat_data_t.chassis_power_buffer;
+    *power = (fp32) power_heat_data.chassis_power;
+    *buffer = (fp32) power_heat_data.buffer_energy;
 
+}
+
+uint16_t get_chassis_buffer_energy(void)
+{
+	return power_heat_data.buffer_energy;
 }
 
 uint8_t get_robot_id(void)
 {
-    return robot_state.robot_id;
+    return robot_status.robot_id;
 }
 
 uint8_t get_robot_level(void)
 {
-		return robot_state.robot_level;
+		return robot_status.robot_level;
 }
 
 /*
@@ -195,19 +193,19 @@ heat0_limit; heat0指的id1的17mm shooter
 */
 void get_shooter_id1_17mm_heat_limit_and_heat(uint16_t *heat0_limit, uint16_t *heat0)
 {
-    *heat0_limit = robot_state.shooter_barrel_heat_limit;
-    *heat0 = power_heat_data_t.shooter_17mm_1_barrel_heat;
+    *heat0_limit = robot_status.shooter_barrel_heat_limit;
+    *heat0 = power_heat_data.shooter_17mm_1_barrel_heat;
 }
 
 void get_shooter_id2_17mm_heat_limit_and_heat(uint16_t *heat1_limit, uint16_t *heat1)
 {
-    *heat1_limit = robot_state.shooter_barrel_heat_limit;
-    *heat1 = power_heat_data_t.shooter_17mm_2_barrel_heat;
+    *heat1_limit = robot_status.shooter_barrel_heat_limit;
+    *heat1 = power_heat_data.shooter_17mm_2_barrel_heat;
 }
 
 uint16_t get_chassis_power_limit(void)
 {
-		return robot_state.chassis_power_limit;
+		return robot_status.chassis_power_limit;
 }
 
 uint16_t get_shooter_id1_17mm_speed_limit(void)
@@ -222,7 +220,7 @@ uint16_t get_shooter_id2_17mm_speed_limit(void)
 
 uint16_t get_shooter_id1_17mm_cd_rate(void)
 {
-		return robot_state.shooter_barrel_cooling_value;
+		return robot_status.shooter_barrel_cooling_value;
 }
 
 uint32_t get_last_robot_state_rx_timestamp(void)
@@ -232,5 +230,5 @@ uint32_t get_last_robot_state_rx_timestamp(void)
 
 uint8_t get_chassis_power_output_status(void)
 {
-    return robot_state.power_management_chassis_output; //0为无输出, 1为24v
+    return robot_status.power_management_chassis_output; //0为无输出, 1为24v
 }
