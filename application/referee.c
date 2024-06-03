@@ -232,3 +232,34 @@ uint8_t get_chassis_power_output_status(void)
 {
     return robot_status.power_management_chassis_output; //0为无输出, 1为24v
 }
+
+uint8_t get_game_state_game_type(void)
+{
+	return game_state.game_type;
+}
+
+uint8_t get_game_state_game_progress(void)
+{
+	return game_state.game_progress;
+}
+
+uint16_t get_game_state_stage_remain_time(void)
+{
+	return game_state.stage_remain_time;
+}
+
+void get_current_and_max_hp(uint16_t *current_HP, uint16_t *maximum_HP)
+{
+	if(current_HP == NULL || maximum_HP == NULL)
+	{
+		return;
+	}
+	
+	*current_HP = robot_status.current_HP;
+	*maximum_HP = robot_status.maximum_HP;
+}
+
+game_robot_HP_t* get_game_robot_HP_ptr(void)
+{
+	return &game_robot_HP;
+}

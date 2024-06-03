@@ -315,4 +315,10 @@ extern uint32_t get_last_robot_state_rx_timestamp(void);
 
 extern uint8_t get_chassis_power_output_status(void);
 
+extern uint8_t get_game_state_game_type(void);
+extern uint8_t get_game_state_game_progress(void);
+extern uint16_t get_game_state_stage_remain_time(void);
+extern void get_current_and_max_hp(uint16_t *current_HP, uint16_t *maximum_HP);
+extern game_robot_HP_t* get_game_robot_HP_ptr(void);
+
 #endif

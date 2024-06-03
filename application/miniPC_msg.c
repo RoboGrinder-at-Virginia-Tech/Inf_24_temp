@@ -55,6 +55,7 @@ embed_msg_to_pc_t embed_msg_to_pc;
 //Embedded -> miniPC
 embed_base_info_t embed_base_info;
 embed_gimbal_info_t embed_gimbal_info;
+embed_referee_info_t embed_referee_info;
 
 /*
 chassis_info 60 Hz
@@ -517,13 +518,6 @@ void embed_base_info_msg_data_update(embed_base_info_t* embed_base_info_ptr, emb
 				break;
 			}
 	}
-	
-//	//For debug only
-//	embed_base_info_ptr->vx_mm = 0x1234;
-//	embed_base_info_ptr->vy_mm = 0x5678;
-//	embed_base_info_ptr->vw_mm = 0x9ABC;
-//	
-//	embed_base_info_ptr->energy_buff_pct = 0xDE;
 }
 
 void embed_gimbal_info_msg_data_update(embed_gimbal_info_t* embed_gimbal_info_ptr, embed_msg_to_pc_t* embed_msg_to_pc_ptr)
@@ -549,6 +543,58 @@ void embed_gimbal_info_msg_data_update(embed_gimbal_info_t* embed_gimbal_info_pt
 	embed_gimbal_info_ptr->robot_id = embed_msg_to_pc_ptr->robot_id;
 //	embed_gimbal_info_ptr->yaw_rate = (uint16_t) (embed_msg_to_pc_ptr->gimbal_control_ptr->gimbal_yaw_motor.motor_gyro * 10000.0f); //= rad/s * 10000
 	embed_gimbal_info_ptr->yaw_rate = embed_msg_to_pc_ptr->gimbal_control_ptr->gimbal_yaw_motor.motor_gyro;
+}
+
+void embed_referee_info_msg_data_update(embed_referee_info_t* embed_referee_info_ptr, embed_msg_to_pc_t* embed_msg_to_pc_ptr)
+{
+	uint16_t current_HP = 0;
+  uint16_t maximum_HP = 0;
+	
+	if(toe_is_error(REFEREE_TOE))
+	{
+		embed_referee_info_ptr->is_ref_system_online = 0;
+		embed_referee_info_ptr->game_type = 4;
+		embed_referee_info_ptr->game_progress = 1;
+		embed_referee_info_ptr->stage_remain_time = 0;
+		embed_referee_info_ptr->robot_id = 0x00;
+		embed_referee_info_ptr->current_HP = 0;
+		embed_referee_info_ptr->maximum_HP = 0;
+		
+	} else {
+		embed_referee_info_ptr->is_ref_system_online = 1;
+		
+		//  0x0001
+		embed_referee_info_ptr->game_type = 4;
+		embed_referee_info_ptr->game_progress = 1;
+		embed_referee_info_ptr->stage_remain_time = 0;
+		
+		// 0x0003
+		game_robot_HP_t* temp_game_robot_HP_ptr = get_game_robot_HP_ptr();
+		embed_referee_info_ptr->red_1_robot_HP = temp_game_robot_HP_ptr->red_1_robot_HP;
+		embed_referee_info_ptr->red_2_robot_HP = temp_game_robot_HP_ptr->red_2_robot_HP;
+		embed_referee_info_ptr->red_3_robot_HP = temp_game_robot_HP_ptr->red_3_robot_HP;
+		embed_referee_info_ptr->red_4_robot_HP = temp_game_robot_HP_ptr->red_4_robot_HP;
+		embed_referee_info_ptr->red_5_robot_HP = temp_game_robot_HP_ptr->red_5_robot_HP;
+		embed_referee_info_ptr->red_7_robot_HP = temp_game_robot_HP_ptr->red_7_robot_HP;
+		embed_referee_info_ptr->red_outpost_HP = temp_game_robot_HP_ptr->red_outpost_HP;
+		embed_referee_info_ptr->red_base_HP = temp_game_robot_HP_ptr->red_base_HP;
+		
+		embed_referee_info_ptr->blue_1_robot_HP = temp_game_robot_HP_ptr->blue_1_robot_HP;
+		embed_referee_info_ptr->blue_2_robot_HP = temp_game_robot_HP_ptr->blue_2_robot_HP;
+		embed_referee_info_ptr->blue_3_robot_HP = temp_game_robot_HP_ptr->blue_3_robot_HP;
+		embed_referee_info_ptr->blue_4_robot_HP = temp_game_robot_HP_ptr->blue_4_robot_HP;
+		embed_referee_info_ptr->blue_5_robot_HP = temp_game_robot_HP_ptr->blue_5_robot_HP;
+		embed_referee_info_ptr->blue_7_robot_HP = temp_game_robot_HP_ptr->blue_7_robot_HP;
+		embed_referee_info_ptr->blue_outpost_HP = temp_game_robot_HP_ptr->blue_outpost_HP;
+		embed_referee_info_ptr->blue_base_HP = temp_game_robot_HP_ptr->blue_base_HP;
+		
+
+		//0x0201中的信息
+		get_current_and_max_hp(&current_HP, &maximum_HP);
+		embed_referee_info_ptr->robot_id = get_robot_id();
+		embed_referee_info_ptr->current_HP = current_HP;
+		embed_referee_info_ptr->maximum_HP = maximum_HP;
+	}
 }
 
 /**
@@ -645,6 +691,7 @@ void embed_send_data_to_pc_loop()
 		//Copy value to send struct. simular to Float_Draw
 		embed_base_info_msg_data_update(&embed_base_info, &embed_msg_to_pc);
 		embed_gimbal_info_msg_data_update(&embed_gimbal_info, &embed_msg_to_pc);
+		embed_referee_info_msg_data_update(&embed_referee_info, &embed_msg_to_pc);
 		
 		//msg to fifo; this is like refresh
 //		embed_base_info_refresh(&embed_chassis_info, sizeof(embed_chassis_info_t));
@@ -655,6 +702,8 @@ void embed_send_data_to_pc_loop()
 		embed_info_msg_refresh((uint8_t*) &embed_base_info, sizeof(embed_base_info_t), BASE_INFO_CMD_ID);	
 		uart1_poll_dma_tx();
 		embed_info_msg_refresh((uint8_t*) &embed_gimbal_info, sizeof(embed_gimbal_info_t), GIMBAL_INFO_CMD_ID);
+		uart1_poll_dma_tx();
+		embed_info_msg_refresh((uint8_t*) &embed_referee_info, sizeof(embed_referee_info_t), REFEREE_INFO_CMD_ID);
 		
 		/*
 		进入这个if的频率决定了生产频率, 到时间后才进入这个if, 没到时间不进入这个if

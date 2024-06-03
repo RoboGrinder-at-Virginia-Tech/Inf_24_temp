@@ -51,6 +51,7 @@ typedef enum
 		//Embeded-->PC
     BASE_INFO_CMD_ID = 0x0204,
     GIMBAL_INFO_CMD_ID = 0x0304,
+		REFEREE_INFO_CMD_ID = 0xF001,
 	
 		//PC-->Embeded
     CHASSIS_REL_CTRL_CMD_ID = 0x1206,

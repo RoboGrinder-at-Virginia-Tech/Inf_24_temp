@@ -170,6 +170,61 @@ decimal val = hex val
 //		int16_t yaw_rate; //= rad/s * 10000
 		fp32 yaw_rate;
 }embed_gimbal_info_t; //GIMBAL_INFO_CMD_ID
+
+/*
+referee related info. Send to PC
+Embedded -> miniPC
+*/
+typedef __packed struct
+{
+    uint8_t is_ref_system_online; // = 1 ref system online; = 0 ref system offline
+    // 当 0-offline时, 以下数据并不是真实的, 是由C板本地提供的
+    
+    // 0x0001中的信息
+    uint8_t game_type : 4;
+    uint8_t game_progress : 4;
+    uint16_t stage_remain_time;
+
+    // 0x0003 中的信息
+    uint16_t red_1_robot_HP;
+    uint16_t red_2_robot_HP;
+    uint16_t red_3_robot_HP;
+    uint16_t red_4_robot_HP;
+    uint16_t red_5_robot_HP;
+    uint16_t red_7_robot_HP;
+    uint16_t red_outpost_HP;
+    uint16_t red_base_HP;
+    uint16_t blue_1_robot_HP;
+    uint16_t blue_2_robot_HP;
+    uint16_t blue_3_robot_HP;
+    uint16_t blue_4_robot_HP;
+    uint16_t blue_5_robot_HP;
+    uint16_t blue_7_robot_HP;
+    uint16_t blue_outpost_HP;
+    uint16_t blue_base_HP;
+
+    //0x0201中的信息
+/*
+decimal val = hex val
+0=0x00              中立 裁判系统故障 谁都不要打       
+1=0x01                RED_HERO
+3=0x03                RED_STANDARD_1
+4=0x04                RED_STANDARD_2
+5=0x05                RED_STANDARD_3
+6=0x06                RED_AERIAL
+7=0x07                RED_SENTRY
+                
+101=0x65                BLUE_HERO
+103=0x67                BLUE_STANDARD_1
+104=0x68                BLUE_STANDARD_2
+105=0x69                BLUE_STANDARD_3
+106=0x6A                BLUE_AERIAL
+107=0x6B                BLUE_SENTRY
+*/
+    uint8_t robot_id;
+    uint16_t current_HP;
+    uint16_t maximum_HP;
+} embed_referee_info_t;
 /*---------------------------------------------------- Raw Data Msg - End Above ----------------------------------------------------*/
 
 /*---------------------------------------------------- Processed Data ----------------------------------------------------*/
