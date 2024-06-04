@@ -564,9 +564,9 @@ void embed_referee_info_msg_data_update(embed_referee_info_t* embed_referee_info
 		embed_referee_info_ptr->is_ref_system_online = 1;
 		
 		//  0x0001
-		embed_referee_info_ptr->game_type = 4;
-		embed_referee_info_ptr->game_progress = 1;
-		embed_referee_info_ptr->stage_remain_time = 0;
+		embed_referee_info_ptr->game_type = get_game_state_game_type();
+		embed_referee_info_ptr->game_progress = get_game_state_game_progress();
+		embed_referee_info_ptr->stage_remain_time = get_game_state_stage_remain_time();
 		
 		// 0x0003
 		game_robot_HP_t* temp_game_robot_HP_ptr = get_game_robot_HP_ptr();

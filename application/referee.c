@@ -193,14 +193,24 @@ heat0_limit; heat0Ö¸µÄid1µÄ17mm shooter
 */
 void get_shooter_id1_17mm_heat_limit_and_heat(uint16_t *heat0_limit, uint16_t *heat0)
 {
-    *heat0_limit = robot_status.shooter_barrel_heat_limit;
-    *heat0 = power_heat_data.shooter_17mm_1_barrel_heat;
+	if(heat0_limit == NULL || heat0 == NULL)
+	{
+		return;
+	}
+    
+	*heat0_limit = robot_status.shooter_barrel_heat_limit;
+  *heat0 = power_heat_data.shooter_17mm_1_barrel_heat;
 }
 
 void get_shooter_id2_17mm_heat_limit_and_heat(uint16_t *heat1_limit, uint16_t *heat1)
 {
-    *heat1_limit = robot_status.shooter_barrel_heat_limit;
-    *heat1 = power_heat_data.shooter_17mm_2_barrel_heat;
+	if(heat1_limit == NULL || heat1 == NULL)
+	{
+		return;
+	}
+  
+	*heat1_limit = robot_status.shooter_barrel_heat_limit;
+  *heat1 = power_heat_data.shooter_17mm_2_barrel_heat;
 }
 
 uint16_t get_chassis_power_limit(void)
