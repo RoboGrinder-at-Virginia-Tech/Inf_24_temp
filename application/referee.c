@@ -233,6 +233,11 @@ uint16_t get_shooter_id1_17mm_cd_rate(void)
 		return robot_status.shooter_barrel_cooling_value;
 }
 
+uint16_t get_shooter_id2_17mm_cd_rate(void)
+{
+		return robot_status.shooter_barrel_cooling_value;
+}
+
 uint32_t get_last_robot_state_rx_timestamp(void)
 {
 	return last_robot_state_rx_timestamp;
