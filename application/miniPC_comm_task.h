@@ -112,7 +112,7 @@ typedef struct
 //This is the DMA buff length
 #define MINIPC_COMM_UART_DMA_TX_BUF_LENGHT 512 //128 //512
 
-#define MINIPC_COMM_FRAME_MAX_SIZE 64 //send temp ram buffer -NOT 40 as before --- might cause outo of bound pointer
+#define MINIPC_COMM_FRAME_MAX_SIZE 136 //send temp ram buffer-40 before - 整帧长度最多 136
 
 typedef struct
 {
@@ -138,7 +138,7 @@ typedef struct
 	
 	//the # of time that send failed
 	uint32_t relative_send_fail_cnts; //relative send counts, will use this to enforce dma tx poll
-	
+	uint32_t high_frequency_relative_send_fail_cnts;
 	
 	uint32_t base_gimbal_info_embed_send_timestamp; //current time stamp
 	

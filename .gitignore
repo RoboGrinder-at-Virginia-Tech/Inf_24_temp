@@ -11,6 +11,9 @@
 JLinkLog.txt
 JLinkSettings.ini
 
+#Keil auto generated file
+MDK-ARM/RTE/_standard_tpye_c/RTE_Components.h
+
 #Keil project IDE files uVision files
 *.crf
 *.axf

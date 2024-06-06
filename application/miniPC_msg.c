@@ -66,7 +66,7 @@ gimbal_info 60 Hz
 
 */
 const uint32_t base_gimbal_info_embed_send_freq = 10; //16; //10; //17; //pre-determined send freq
-const uint32_t referee_info_embed_send_freq = 10; //16; 
+const uint32_t referee_info_embed_send_freq = 100; //16; 
 
 /*init_miniPC_comm_struct_data; this is the main task
 pc -> embed
@@ -707,6 +707,29 @@ void embed_send_data_to_pc_loop()
 		进入这个if的频率决定了生产频率, 到时间后才进入这个if, 没到时间不进入这个if
 		没到时间需确认消费者在消费状态
 		*/
+		
+		//enable uart tx DMA which is the DMA poll
+		if(uart1_poll_dma_tx())
+		{
+			embed_send_protocol.high_frequency_relative_send_fail_cnts++;
+		}
+		else
+		{
+			embed_send_protocol.high_frequency_relative_send_fail_cnts = 0;
+		}
+		
+		//if reach a certain number, enforce sending, ensure fifo will not be used out
+		if(embed_send_protocol.high_frequency_relative_send_fail_cnts >= 5)
+		{
+			while(!(get_uart1_embed_send_status()==0))
+			{
+				vTaskDelay(1);
+				uart1_poll_dma_tx();
+			}
+			
+			uart1_poll_dma_tx();
+			embed_send_protocol.high_frequency_relative_send_fail_cnts = 0;
+		}
 	}
 	
 //	if(xTaskGetTickCount() - referee_info_embed_send_freq > embed_send_protocol.referee_info_embed_send_timestamp)
@@ -745,7 +768,7 @@ void embed_send_data_to_pc_loop()
 		uart1_poll_dma_tx();
 		embed_send_protocol.relative_send_fail_cnts = 0;
 	}
-//}//----------------
+
 }
 
 /* -------------------------------- USART SEND DATA FILL END-------------------------------- */
