@@ -228,12 +228,6 @@ decimal val = hex val
 /*---------------------------------------------------- Raw Data Msg - End Above ----------------------------------------------------*/
 
 /*---------------------------------------------------- Processed Data ----------------------------------------------------*/
-//uint8_t  autoAimFlag = 1; //自动瞄准开关状态 0关 1自动瞄准
-//uint8_t shootCommand = 0x00;//自动开火指令  0x00 = 停火  0xff = 开火
-//uint8_t fricCommand = 0x01;// 摩擦轮转速指令  0x01 =低转  0x02 = 高转
-//fp32 yawMove = 0;  //云台数据
-//fp32 pitchMove = 0;  //云台数据
-//uint32_t timeFlag = 0; //
 typedef enum
 {
 	PC_OFFLINE,
@@ -296,6 +290,14 @@ typedef struct
 //底盘任务控制间隔 0.002s
 #define MINIPC_AID_GIMBAL_CONTROL_MSG_TIME 0.06f
 
+// 自瞄模式
+typedef enum
+{
+	AUTO_AIM_OFF = 0,
+	AUTO_AIM_AID = 1,
+	AUTO_AIM_LOCK = 2,
+}auto_aim_mode_e;
+
 typedef struct
 {
 	/* -------------------- Var from cv comm -------------------- */
@@ -335,7 +337,7 @@ typedef struct
 	2 cmd for gimbal LOCK
 	--6-25-2023修改: 由于辅助瞄准和绝对坐标瞄准同时发送 1 和 2会频繁切换, 但是0只在掉线时出现
 	*/
-	uint8_t cv_gimbal_sts;
+	auto_aim_mode_e cv_gimbal_sts;
 	
 	//UI related: pc_ui_msg_t
 	uint16_t dis_raw;
@@ -347,7 +349,8 @@ typedef struct
 	
   /* -------------------- CV ON/OFF controled by operator -------------------- */
 	//Auto aim ON/OFF switch status: 0-off; 1-auto aim AID; 2-auto aim LOCK
-	uint8_t autoAimFlag;
+	auto_aim_mode_e auto_aim_mode;
+	auto_aim_mode_e last_auto_aim_mode;
 	/* -------------------- CV ON/OFF controled by operator - END -------------------- */
 }pc_info_t;
 /*---------------------------------------------------- Processed Data - End Above ----------------------------------------------------*/
@@ -367,9 +370,9 @@ bool_t is_enemy_detected_with_pc_toe(void);
 bool_t is_enemy_detected(void);
 uint8_t get_enemy_detected(void);
 uint8_t get_shootCommand(void);
-uint8_t get_cv_gimbal_sts(void);
+auto_aim_mode_e get_cv_gimbal_sts(void);
 fp32 get_aim_pos_dis(void);
-uint8_t get_autoAimFlag(void);
+auto_aim_mode_e get_auto_aim_mode(void);
 
 //miniPC base control
 void get_base_ctrl_vx_vy_wrt_gimbal(fp32* vx_out, fp32* vy_out);
@@ -378,6 +381,6 @@ fp32 get_base_ctrl_vy_wrt_gimbal(void);
 fp32 get_base_ctrl_yaw_aid(void);
 
 //declear setter method
-void set_autoAimFlag(uint8_t autoAimFlag);
+void set_auto_aim_mode(auto_aim_mode_e auto_aim_mode);
 
 #endif

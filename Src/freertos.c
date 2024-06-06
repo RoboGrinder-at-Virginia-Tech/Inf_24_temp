@@ -39,7 +39,7 @@
 #include "usb_ano_task.h"
 #include "voltage_task.h"
 #include "servo_task.h"
-#include "client_ui_task.h"
+#include "referee_interact_task.h"
 #include "miniPC_comm_task.h"
 
 /* USER CODE END Includes */
@@ -67,7 +67,7 @@ osThreadId usb_task_handle;
 osThreadId battery_voltage_handle;
 osThreadId servo_task_handle;
 
-osThreadId client_ui_task_handle;
+osThreadId referee_interact_task_handle;
 
 /* USER CODE END PTD */
 
@@ -227,8 +227,8 @@ void MX_FREERTOS_Init(void) {
 //    osThreadDef(SERVO, servo_task, osPriorityNormal, 0, 128);
 //    servo_task_handle = osThreadCreate(osThread(SERVO), NULL);
 		//10-21֮ǰosPriorityBelowNormal
-		osThreadDef(UI, client_ui_task, osPriorityNormal, 0, 512); //osPriorityBelowNormal osPriorityNormal
-		client_ui_task_handle =  osThreadCreate(osThread(UI), NULL);
+		osThreadDef(UI, referee_interact_task, osPriorityNormal, 0, 512); //osPriorityBelowNormal osPriorityNormal
+		referee_interact_task_handle =  osThreadCreate(osThread(UI), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }

@@ -13,38 +13,37 @@
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 
-void superCap_offline_proc(void);
+void zidaCap_offline_proc(void);
 
 //static CAN_TxHeaderTypeDef  superCap_tx_message;
-static uint8_t              superCap_can_send_data[8];
+static uint8_t              zidaCap_can_send_data[8];
 static uint8_t              wulieCap_can_send_data[8];
-static uint8_t              sCap23_can_send_data[8];
+static uint8_t              gen2Cap_can_send_data[8];
 static uint8_t              gen3Cap_can_send_data[8];
 
-superCap_info_t superCap_info1;
-superCap_info_t superCap_info2;
-superCap_info_t superCap_info3;//<----Ô½½çÖ¸Õë±ß½ç ´óÖÂÎ»ÖÃ
-superCap_info_t superCap_info4;
-superCap_info_t superCap_info;//ÓÃµÄÕâÒ»¸ö 3 4ºÍÕâ¸öÊÇÕı³£µÄ
-wulieCap_info_t wulie_Cap_info;//ÎíÁĞ³¬¼¶µçÈİ¿ØÖÆ°åµÄ½á¹¹Ìå
-sCap23_info_t sCap23_info; //ĞÂµÄ³¬¼¶µçÈİ¿ØÖÆ°å
+zidaCap_info_t zidaCap_info;// ZiDa ³¬¼¶µçÈİ
+wulieCap_info_t wulieCap_info;//  ÎíÁĞ³¬¼¶µçÈİ¿ØÖÆ°åµÄ½á¹¹Ìå
+gen2Cap_info_t gen2Cap_info; // PR YiLin 2023 Seattle ³¬¼¶µçÈİ¿ØÖÆ°å
 gen3Cap_info_t gen3Cap_info; // µÚÈı´ú³¬¼¶µçÈİ
 
-CAN_TxHeaderTypeDef  superCap_tx_message;
-CAN_TxHeaderTypeDef  wulie_Cap_tx_message;
-CAN_TxHeaderTypeDef  sCap23_tx_message;
+CAN_TxHeaderTypeDef  zidaCap_tx_message;
+CAN_TxHeaderTypeDef  wulieCap_tx_message;
+CAN_TxHeaderTypeDef  gen2Cap_tx_message;
 CAN_TxHeaderTypeDef  gen3Cap_tx_message;
 
-supercap_can_msg_id_e current_superCap; //±íÃ÷µ±Ç°Ê¹ÓÃµÄÊÇÄÄÒ»¸ö³¬¼¶µçÈİ
-
-uint8_t debug_max_pwr;
-uint8_t debug_fail_safe_pwr;
-//uint8_t debug_a=0;
-//uint8_t debug_b;
-//uint8_t debug_c;
+supercap_can_msg_id_e current_superCap; // ±íÃ÷µ±Ç°Ê¹ÓÃµÄÊÇÄÄÒ»¸ö³¬¼¶µçÈİ
 
 uint32_t any_Cap_can_msg_send_TimeStamp = 0;
-const uint16_t any_Cap_can_msg_send_sendFreq = 100;
+const uint16_t any_Cap_can_msg_send_sendPeriod = 50;
+
+/*  ¹¦ÄÜ ¼ÆËã ¸¨Öúº¯Êı */
+
+/* ¼ÆËã »ñµÃ µ±Ç°ÔÚÏßµÄ³¬¼¶µçÈİ, ÄÜÁ¿(½¹¶ú)°Ù·Ö±È, 13vÊ±Îª0%
+ÇÒÈ·±£ ²ÎÊıµÄÕıÈ·ĞÔ */
+fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol)
+{
+	return fp32_constrain( ( (curr_vol - min_vol) * (curr_vol - min_vol) ) / ( (max_vol - min_vol) * (max_vol - min_vol) ), 0.0f, 1.0f);
+}
 
 void superCap_comm_bothway_init()
 {
@@ -54,45 +53,44 @@ void superCap_comm_bothway_init()
 	2 CAN½ÓÊÕÊı¾İ
 	*/
 	//1³õÊ¼»¯·¢ËÍ
-	superCap_info.max_charge_pwr_command = 0;
-	superCap_info.fail_safe_charge_pwr_command = 0;
+	zidaCap_info.max_charge_pwr_command = 0;
+	zidaCap_info.fail_safe_charge_pwr_command = 0;
 	
 	//2³õÊ¼»¯½ÓÊÕ
-	superCap_info.EBPct_fromCap = 0.0f;
-	superCap_info.VBKelvin_fromCap = 0.0f;
-	superCap_info.status = superCap_offline;
-	//superCap_info.data_EBPct_status = SuperCap_dataIsError;
-	superCap_info.msg_u_EBPct.array[0] = 0;
-	superCap_info.msg_u_EBPct.array[1] = 0;
-	superCap_info.a = 0;
-	superCap_info.b = 0;
-	superCap_info.c = 0;
+	zidaCap_info.EBPct_fromCap = 0.0f;
+	zidaCap_info.VBKelvin_fromCap = 0.0f;
+	zidaCap_info.status = superCap_offline;
+	//zidaCap_info.data_EBPct_status = SuperCap_dataIsError;
+	zidaCap_info.msg_u_EBPct.array[0] = 0;
+	zidaCap_info.msg_u_EBPct.array[1] = 0;
 	
-	current_superCap = sCap23_ID; //SuperCap_ID;//SuperCap_ID wulie_Cap_CAN_ID
+	current_superCap = gen2Cap_ID; //SuperCap_ID;//SuperCap_ID wulie_Cap_CAN_ID
 }
 
-uint16_t temp_pwr_command=0;
 void superCap_control_loop()
 {
 	//·¢ËÍÈÎÎñ¼ÆÊ±, Ê±¼äµ½ÁË¿ªÊ¼Ò»´Î·¢ËÍ
-	if(xTaskGetTickCount() - any_Cap_can_msg_send_sendFreq > any_Cap_can_msg_send_TimeStamp)
+	if(xTaskGetTickCount() - any_Cap_can_msg_send_TimeStamp > any_Cap_can_msg_send_sendPeriod)
 	{
 		any_Cap_can_msg_send_TimeStamp = xTaskGetTickCount(); //¸üĞÂÊ±¼ä´Á 
 			
-		if(current_superCap == SuperCap_ID)
-		{//×Ï´ï¿ØÖÆ°å
+		if(current_superCap == ZiDaCap_ID)
+		{
+			uint16_t temp_pwr_command=0;
+			
+			//×Ï´ï¿ØÖÆ°å
 			//Texas µ÷ÊÔ
 			temp_pwr_command = get_chassis_power_limit();
 			
-//			superCap_info.max_charge_pwr_command = get_chassis_power_limit() - 2.5f;
+//			zidaCap_info.max_charge_pwr_command = get_chassis_power_limit() - 2.5f;
 //			//ÕâÊ±fail safe¸Ã²»¸Ã¼ÌĞø°´ÕÕµ±Ç°ÔÊĞíµÄ×î´ó¹¦ÂÊÀ´SZL 5-16-2022 »¹ÊÇÓ¦¸Ã°´µÈ¼¶ĞÅÏ¢À´Ëã?
-//			superCap_info.fail_safe_charge_pwr_command = get_chassis_power_limit() - 2.5f;
+//			zidaCap_info.fail_safe_charge_pwr_command = get_chassis_power_limit() - 2.5f;
 			
 			//ÓÃtemp_pwr_commandÀ´ÅĞ¶ÏÒ»¸ö²»ºÏÀíÊıÖµ
 			if(temp_pwr_command > 110)
 			{
-//				superCap_info.max_charge_pwr_command = 60 - 3;
-//				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+//				zidaCap_info.max_charge_pwr_command = 60 - 3;
+//				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 					temp_pwr_command = INITIAL_STATE_CHASSIS_POWER_LIM;
 			}
 			
@@ -101,65 +99,65 @@ void superCap_control_loop()
 			*/
 			if(temp_pwr_command == 40)
 			{
-				superCap_info.max_charge_pwr_command = 40 - 3;//2.5f;// 40 µµ offset 2.5f
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 40 - 3;//2.5f;// 40 µµ offset 2.5f
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			else if(temp_pwr_command == 60)
 			{
-				superCap_info.max_charge_pwr_command = 60 - 3;//2.5f;// 60 µµ offset 2.5f
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 60 - 3;//2.5f;// 60 µµ offset 2.5f
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			else if(temp_pwr_command == 80 )
 			{
-				superCap_info.max_charge_pwr_command = 80 - 5;
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 80 - 5;
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			else if(temp_pwr_command == 100)
 			{
-				superCap_info.max_charge_pwr_command = 80;
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 80;
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			else if(temp_pwr_command == 45)
 			{
-				superCap_info.max_charge_pwr_command = 45 - 3;//2.5f;// 40 µµ offset 2.5f
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 45 - 3;//2.5f;// 40 µµ offset 2.5f
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			else if(temp_pwr_command == 50)
 			{
-				superCap_info.max_charge_pwr_command = 50 - 3;//2.5f;// 40 µµ offset 2.5f
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 50 - 3;//2.5f;// 40 µµ offset 2.5f
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			else if(temp_pwr_command == 55)
 			{
-				superCap_info.max_charge_pwr_command = 55 - 3;//2.5f;// 40 µµ offset 2.5f
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 55 - 3;//2.5f;// 40 µµ offset 2.5f
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			else
 			{
-				superCap_info.max_charge_pwr_command = 40 - 3;//2.5f;// 40 µµ offset 2.5f
-				superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+				zidaCap_info.max_charge_pwr_command = 40 - 3;//2.5f;// 40 µµ offset 2.5f
+				zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 			}
 			
-//			superCap_info.max_charge_pwr_command = 70.0f;
-//			superCap_info.fail_safe_charge_pwr_command = 40.0f;
+//			zidaCap_info.max_charge_pwr_command = 70.0f;
+//			zidaCap_info.fail_safe_charge_pwr_command = 40.0f;
 				
-//			if(superCap_info.max_charge_pwr_command >= 101.0f)
+//			if(zidaCap_info.max_charge_pwr_command >= 101.0f)
 //			{
-//				superCap_info.max_charge_pwr_command = 40;
+//				zidaCap_info.max_charge_pwr_command = 40;
 //			}
 //				
-//			if(superCap_info.fail_safe_charge_pwr_command >= 101.0f)
+//			if(zidaCap_info.fail_safe_charge_pwr_command >= 101.0f)
 //			{
-//				superCap_info.fail_safe_charge_pwr_command = 40;
+//				zidaCap_info.fail_safe_charge_pwr_command = 40;
 //			}
 			
 			//TODO: remove debug ²¢Ìí¼ÓÏŞÖÆ·ù¶È
 			
 			//For Debug Only------------------------------------------------------------------------------------------------------------------------------------
-			superCap_info.max_charge_pwr_command = 10;//2.5f;// 40 µµ offset 2.5f
-			superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
+			zidaCap_info.max_charge_pwr_command = 10;//2.5f;// 40 µµ offset 2.5f
+			zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 				
-			CAN_command_superCap(superCap_info.max_charge_pwr_command, superCap_info.fail_safe_charge_pwr_command);	
+			CAN_command_zidaCap(zidaCap_info.max_charge_pwr_command, zidaCap_info.fail_safe_charge_pwr_command);	
 		}
 		else if(current_superCap == gen3Cap_ID)
 		{
@@ -188,80 +186,281 @@ void superCap_control_loop()
 			if(toe_is_error(REFEREE_TOE))
 			{
 				gen3Cap_info.power_management_chassis_output = 1;// Ä¬ÈÏ¿ª»ú ´Ë±äÁ¿ÓÃÓÚµ÷ÊÔ
+				gen3Cap_info.buffer_energy = 0;
 			} else {
 				gen3Cap_info.power_management_chassis_output = get_chassis_power_output_status();
+				gen3Cap_info.buffer_energy = get_chassis_buffer_energy();
 			}
 			
 			if(gen3Cap_info.power_management_chassis_output)
 			{
 				gen3Cap_info.dcdc_enable = 1;
-				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode);
+				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode, gen3Cap_info.buffer_energy);
 			} else {
 				gen3Cap_info.dcdc_enable = 0;
-				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode);
+				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode, gen3Cap_info.buffer_energy);
 			}
 		}
-		else if(current_superCap == sCap23_ID)
-		{//sCap23Ò×ÁÖ³¬¼¶µçÈİ¿ØÖÆ°å
+		else if(current_superCap == gen2Cap_ID)
+		{// gen2Cap Ò×ÁÖ³¬¼¶µçÈİ¿ØÖÆ°å
 			//¼ÆËãmax_charge_pwr_from_ref
-			sCap23_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 0.0f; //2.5f
+			gen2Cap_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 0.0f; //2.5f
 			
-			if(sCap23_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
+			if(gen2Cap_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
 			{
-				sCap23_info.max_charge_pwr_from_ref = 40;
+				gen2Cap_info.max_charge_pwr_from_ref = 40;
 			}
 			
 //			//Only for Debug
-//			sCap23_info.max_charge_pwr_from_ref = 41; //66;
+//			gen2Cap_info.max_charge_pwr_from_ref = 41; //66;
 			//--------------------------------------------
 			
 			//¼ÆËãfail_safe_charge_pwr_ref ĞŞ¸Ä³ÉÓÃifelse±ê¶¨µÈ¼¶±ê¶¨fail safe, Õâ¸öµÄÄ¿µÄÊÇ ±ÈÈüÖĞ¿ÉÄÜÓĞÁÙÊ±µÄµ×ÅÌ³äµçÔöÒæ, fail safe±íÊ¾µ±Ç°µÄÒ»¸ö°²È«ÊıÖµ
-			sCap23_info.fail_safe_charge_pwr_ref = sCap23_info.max_charge_pwr_from_ref; //40; // 60; // = sCap23_info.max_charge_pwr_from_ref;
+			gen2Cap_info.fail_safe_charge_pwr_ref = gen2Cap_info.max_charge_pwr_from_ref; //40; // 60; // = gen2Cap_info.max_charge_pwr_from_ref;
 		
-			sCap23_info.charge_pwr_command = sCap23_info.max_charge_pwr_from_ref;
-			sCap23_info.fail_safe_charge_pwr_command = sCap23_info.fail_safe_charge_pwr_ref;
+			gen2Cap_info.charge_pwr_command = gen2Cap_info.max_charge_pwr_from_ref;
+			gen2Cap_info.fail_safe_charge_pwr_command = gen2Cap_info.fail_safe_charge_pwr_ref;
 			
 			//ÏŞÖÆ·ù¶È
-			sCap23_info.charge_pwr_command = uint8_constrain(sCap23_info.charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
-			sCap23_info.fail_safe_charge_pwr_command = uint8_constrain(sCap23_info.fail_safe_charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			gen2Cap_info.charge_pwr_command = uint8_constrain(gen2Cap_info.charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			gen2Cap_info.fail_safe_charge_pwr_command = uint8_constrain(gen2Cap_info.fail_safe_charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
 			
-			CAN_command_sCap23(sCap23_info.charge_pwr_command, sCap23_info.fail_safe_charge_pwr_command);
+			CAN_command_gen2Cap(gen2Cap_info.charge_pwr_command, gen2Cap_info.fail_safe_charge_pwr_command);
 		}
-		else //if(current_superCap == wulie_Cap_CAN_ID)
+		else //if(current_superCap == WuLieCap_CAN_ID)
 		{//ÎíÁĞ¿ØÖÆ°å
-			wulie_Cap_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 2.5f;
+			wulieCap_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 2.5f;
 				
-			if(wulie_Cap_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
+			if(wulieCap_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
 			{
-				wulie_Cap_info.max_charge_pwr_from_ref = 40;
+				wulieCap_info.max_charge_pwr_from_ref = 40;
 			}
 			
 			//TODO: remove debug ²¢Ìí¼ÓÏŞÖÆ·ù¶È
 			
 			//Only for Debug
-			wulie_Cap_info.max_charge_pwr_from_ref = 30;
+			wulieCap_info.max_charge_pwr_from_ref = 30;
 				
-			wulie_Cap_info.charge_pwr_command = wulie_Cap_info.max_charge_pwr_from_ref * 100.f;
-			CAN_command_wulie_Cap(wulie_Cap_info.charge_pwr_command);
+			wulieCap_info.charge_pwr_command = wulieCap_info.max_charge_pwr_from_ref * 100.f;
+			CAN_command_wulieCap(wulieCap_info.charge_pwr_command);
 		}
 	}
 }
-//	//ICRA only
-//	superCap_info.max_charge_pwr_command = ICRA_superCap_max_power; //=65w
-//	superCap_info.fail_safe_charge_pwr_command = ICRA_superCap_fail_safe_power; //=65w
-//	CAN_command_superCap(superCap_info.max_charge_pwr_command, superCap_info.fail_safe_charge_pwr_command);	
+
+/* Í¨ÓÃ ÅĞ¶ÏµôÏßÏà¹Ø */
+
+/*ÏÂÃæÁ½¸öº¯Êı; 0->normal/online; 1->error/offline*/
+bool_t current_superCap_is_offline()
+{
+	if (current_superCap == gen3Cap_ID)
+	{
+		return toe_is_error(GEN3CAP_TOE);
+	}
+	else if(current_superCap == gen2Cap_ID) //SuperCap_ID
+	{
+		return toe_is_error(GEN2CAP_TOE);
+	}
+	else if(current_superCap == WuLieCap_CAN_ID)
+	{
+		return toe_is_error(WULIECAP_TOE);
+	}
+	else
+	{
+		return toe_is_error(ZIDACAP_TOE);
+	}
+}
+
+bool_t all_superCap_is_error()
+{
+	return toe_is_error(ZIDACAP_TOE) && toe_is_error(WULIECAP_TOE) && toe_is_error(GEN2CAP_TOE) && toe_is_error(GEN3CAP_TOE);
+}
+
+supercap_can_msg_id_e get_current_superCap()
+{
+		return current_superCap;
+}
+
+/* can Çı¶¯²ã */
+/*
+SZL 3-10-2022 ÏÂ·¢µ½SuperCapµÄÊı¾İ
+SZL 12-27-2022 ĞÂÔöYiLin³¬¼¶µçÈİ
+*/
+void CAN_command_gen2Cap(uint8_t max_pwr, uint8_t fail_safe_pwr)
+{
+		uint32_t send_mail_box;
+    gen2Cap_tx_message.StdId = RMTypeC_Master_Command_ID;
+    gen2Cap_tx_message.IDE = CAN_ID_STD;
+    gen2Cap_tx_message.RTR = CAN_RTR_DATA;
+    gen2Cap_tx_message.DLC = 0x08;
+    gen2Cap_can_send_data[0] = max_pwr;
+    gen2Cap_can_send_data[1] = fail_safe_pwr;
+    gen2Cap_can_send_data[2] = 0;
+    gen2Cap_can_send_data[3] = 0;
+    gen2Cap_can_send_data[4] = 0; 
+    gen2Cap_can_send_data[5] = 0; 
+    gen2Cap_can_send_data[6] = 0; 
+    gen2Cap_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &gen2Cap_tx_message, gen2Cap_can_send_data, &send_mail_box);
+}
+
+void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode, uint16_t buffer_energy)
+{
+		uint32_t send_mail_box;
+    gen3Cap_tx_message.StdId = RMTypeC_Master_Command_ID_for_gen3Cap;
+    gen3Cap_tx_message.IDE = CAN_ID_STD;
+    gen3Cap_tx_message.RTR = CAN_RTR_DATA;
+    gen3Cap_tx_message.DLC = 0x08;
+    gen3Cap_can_send_data[0] = max_pwr;
+    gen3Cap_can_send_data[1] = fail_safe_pwr;
+    gen3Cap_can_send_data[2] = dcdc_enable;
+    gen3Cap_can_send_data[3] = dcdc_mode;
+	  // ½« buffer_energy µÄµÍ×Ö½Ú¸³Öµ¸øÊı×éµÄµÚ 4 ¸öÎ»ÖÃ
+    gen3Cap_can_send_data[4] = (uint8_t)(buffer_energy & 0xFF);
+	  // ½« buffer_energy µÄ¸ß×Ö½Ú¸³Öµ¸øÊı×éµÄµÚ 5 ¸öÎ»ÖÃ
+		gen3Cap_can_send_data[5] = (uint8_t)(buffer_energy >> 8);
+	 
+    gen3Cap_can_send_data[6] = 0; 
+    gen3Cap_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &gen3Cap_tx_message, gen3Cap_can_send_data, &send_mail_box);
+}
+
+void CAN_command_zidaCap(uint8_t max_pwr, uint8_t fail_safe_pwr)
+{
+		uint32_t send_mail_box;
+    zidaCap_tx_message.StdId = RMTypeC_Master_Command_ID;
+    zidaCap_tx_message.IDE = CAN_ID_STD;
+    zidaCap_tx_message.RTR = CAN_RTR_DATA;
+    zidaCap_tx_message.DLC = 0x08;
+    zidaCap_can_send_data[0] = max_pwr;
+    zidaCap_can_send_data[1] = fail_safe_pwr;
+    zidaCap_can_send_data[2] = 0;
+    zidaCap_can_send_data[3] = 0;
+    zidaCap_can_send_data[4] = 0; 
+    zidaCap_can_send_data[5] = 0; 
+    zidaCap_can_send_data[6] = 0; 
+    zidaCap_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &zidaCap_tx_message, zidaCap_can_send_data, &send_mail_box);
+}
+
+void CAN_command_wulieCap(uint16_t temPower)
+{
+		uint32_t send_mail_box;
+    wulieCap_tx_message.StdId = RMTypeC_Master_Command_ID_for_WuLie;
+    wulieCap_tx_message.IDE = CAN_ID_STD;
+    wulieCap_tx_message.RTR = CAN_RTR_DATA;
+    wulieCap_tx_message.DLC = 0x08;
+    wulieCap_can_send_data[0] = temPower >> 8;
+    wulieCap_can_send_data[1] = temPower;
+    wulieCap_can_send_data[2] = 0;
+    wulieCap_can_send_data[3] = 0;
+    wulieCap_can_send_data[4] = 0; 
+    wulieCap_can_send_data[5] = 0; 
+    wulieCap_can_send_data[6] = 0; 
+    wulieCap_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&hcan1, &wulieCap_tx_message, wulieCap_can_send_data, &send_mail_box);
+}
+
+/* TOE Ä£¿é²ã ¹¦ÄÜº¯Êı*/
+
+//·µ»ØÊı¾İÏà¹Ø
+void zidaCap_offline_proc()
+{
+		zidaCap_info.status = superCap_offline;
+		
+	
+}
+
+bool_t zidaCap_is_data_error_proc()
+{
+		zidaCap_info.status = superCap_online;
+	
+		if(zidaCap_info.EBPct_fromCap < -100.0f || zidaCap_info.EBPct_fromCap > 200.0f)
+		{
+			zidaCap_info.data_EBPct_status = SuperCap_dataIsError;
+			return 0;
+			
+		}
+		else
+		{
+			zidaCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
+			return 0;
+		}
+}
+
+void zidaCap_solve_data_error_proc()
+{
+		//ÒòÎªÆäÊıÖµ¿ÉÄÜ³¬¹ı100 ËùÒÔÔİÊ±°ÑÕâ¸ö¹¦ÄÜÆÁ±Îµô ICRA
+//		if(zidaCap_info.data_EBPct_status == SuperCap_dataIsError)
+//		{
+//			if(zidaCap_info.EBPct_fromCap < 0.0f)
+//				zidaCap_info.EBPct_fromCap = 0.0f;
+//			if(zidaCap_info.EBPct_fromCap > 100.0f)
+//				zidaCap_info.EBPct_fromCap = 100.0f;
+//		}
+		return;
+}
+
+//ÒÔÏÂÎªÒ×ÁÖ³¬¼¶µçÈİÏà¹Ø
+void gen2Cap_offline_proc()
+{
+		gen2Cap_info.status = superCap_offline;
+}
+
+bool_t gen2Cap_is_data_error_proc()
+{
+		gen2Cap_info.status = superCap_online;
+		//ÓÀÔ¶ return 0;
+		return 0;
+}
+
+//ÒÔÏÂÎªÅíî£µÚÈı´ú³¬¼¶µçÈİÏà¹Ø
+void gen3Cap_offline_proc()
+{
+		gen3Cap_info.status = superCap_offline;
+}
+
+bool_t gen3Cap_is_data_error_proc()
+{
+	gen3Cap_info.status = superCap_online;
+	
+	// ¾ÍÅĞ¶Ï¸öÊÇ·ñÓĞerror flag - ²»ÊÇNORMAL¼´error
+	if(gen3Cap_info.Pflag != CAP_NORMAL)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+//ÒÔÏÂÎªÎíÁĞÏà¹ØµÄ
+void wulieCap_offline_proc()
+{
+		wulieCap_info.status = superCap_offline;
+}
+
+bool_t wulieCap_is_data_error_proc()
+{
+		wulieCap_info.status = superCap_online;
+		//ÓÀÔ¶ return 0;
+		return 0;
+}
+
+/* ¸ø¸÷¸öÊ¹ÓÃ supercap µÄÄ£¿éµÄ¹¦ÄÜº¯Êı */
 
 /*
 ¸ù¾İÄ¿Ç°Ê¹ÓÃµÄ³¬¼¶µçÈİ ·µ»ØµçÈİ×éµçÑ¹ºÍÊ£ÓàÄÜÁ¿
 ÕâÀïÒª×öµÄ¾ÍÊÇ·µ»ØºÏÀíµÄ ´«¸ĞÆ÷Êı¾İ ²»ĞèÒªÔÚÕâÀï¿¼ÂÇµôÏß
 */
-void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖÆÊ¹ÓÃ
+void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖÆÊ¹ÓÃ
 {
 	fp32 temp_EBank=0, temp_cap_voltage=0;
-	if(current_superCap == SuperCap_ID)
+	if(current_superCap == ZiDaCap_ID)
 	{
-		temp_EBank = superCap_info.EBank;
-		temp_cap_voltage = superCap_info.VBKelvin_fromCap;
+		temp_EBank = zidaCap_info.EBank;
+		temp_cap_voltage = zidaCap_info.VBKelvin_fromCap;
 		
 		temp_EBank = fp32_constrain(temp_EBank, 0.0f, 2106.75f);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
 		temp_cap_voltage = fp32_constrain(temp_cap_voltage, 0.0f, 26.5f);
@@ -270,10 +469,22 @@ void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖÆÊ¹Ó
 		*cap_voltage = temp_cap_voltage;
 		return;
 	}
-	else if(current_superCap == sCap23_ID)
+	else if(current_superCap == gen3Cap_ID)
 	{
-		temp_EBank = sCap23_info.EBank;
-		temp_cap_voltage = sCap23_info.Vbank_f;
+		temp_EBank = gen3Cap_info.EBank;
+		temp_cap_voltage = gen3Cap_info.Vbank_f;
+		
+		temp_EBank = fp32_constrain(temp_EBank, 0.0f, 2106.75f);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
+		temp_cap_voltage = fp32_constrain(temp_cap_voltage, 0.0f, 28.5f);
+		
+		*EBank = temp_EBank;
+		*cap_voltage = temp_cap_voltage;
+		return;
+	}
+	else if(current_superCap == gen2Cap_ID)
+	{
+		temp_EBank = gen2Cap_info.EBank;
+		temp_cap_voltage = gen2Cap_info.Vbank_f;
 		
 		temp_EBank = fp32_constrain(temp_EBank, 0.0f, 2106.75f);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
 		temp_cap_voltage = fp32_constrain(temp_cap_voltage, 0.0f, 28.5f);
@@ -284,8 +495,8 @@ void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖÆÊ¹Ó
 	}
 	else
 	{
-		temp_EBank = wulie_Cap_info.EBank;
-		temp_cap_voltage = wulie_Cap_info.cap_voltage;
+		temp_EBank = wulieCap_info.EBank;
+		temp_cap_voltage = wulieCap_info.cap_voltage;
 		
 		temp_EBank = fp32_constrain(temp_EBank, 0.0f, 2106.75f);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
 		temp_cap_voltage = fp32_constrain(temp_cap_voltage, 0.0f, 26.5f);
@@ -299,267 +510,173 @@ void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖÆÊ¹Ó
 /*
 ·µ»Ø³¬¼¶µçÈİ³äµç¹¦ÂÊ
 */
-uint16_t get_superCap_charge_pwr() //½ö¹¦ÂÊ¿ØÖÆÊ¹ÓÃ
+uint16_t cpc_get_superCap_charge_pwr() //½ö¹¦ÂÊ¿ØÖÆÊ¹ÓÃ
 {
 	fp32 temp_charge_pwr=0;
-	if(current_superCap == SuperCap_ID)
+	
+	if(current_superCap == ZiDaCap_ID)
 	{
-		temp_charge_pwr = superCap_info.max_charge_pwr_command;
+		temp_charge_pwr = zidaCap_info.max_charge_pwr_command;
 		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
 		
 		return (uint16_t)temp_charge_pwr;
 	}
-	else if(current_superCap == sCap23_ID)
+	else if(current_superCap == gen3Cap_ID)
 	{
-		temp_charge_pwr = sCap23_info.charge_pwr_command;
+		temp_charge_pwr = gen3Cap_info.charge_pwr_command;
+		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
+		
+		return (uint16_t)temp_charge_pwr;
+	}
+	else if(current_superCap == gen2Cap_ID)
+	{
+		temp_charge_pwr = gen2Cap_info.charge_pwr_command;
 		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
 		
 		return (uint16_t)temp_charge_pwr;
 	}
 	else
 	{
-		temp_charge_pwr = wulie_Cap_info.max_charge_pwr_from_ref;
+		temp_charge_pwr = wulieCap_info.max_charge_pwr_from_ref;
 		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
 		
 		return (uint16_t)temp_charge_pwr;
 	}
 }
 
-/*ÏÂÃæÁ½¸öº¯Êı; 0->normal/online; 1->error/offline*/
-bool_t current_superCap_is_offline()
+fp32 cpc_get_gen3Cap_Pmax()
 {
-	if (current_superCap == gen3Cap_ID)
+	return gen3Cap_info.Pmax_f;
+}
+
+cap_Pflag_e get_gen3Cap_P_Flag()
+{
+	return gen3Cap_info.Pflag;
+}
+
+// ¸ø chassis energy regulate µÄº¯Êı
+fp32 cer_get_current_cap_boost_mode_pct_threshold()
+{
+	// ÌØÊâÇé¿ö1: ÎŞ³¬¼¶µçÈİÔÚÏß - ÓÃµÄ»º³åÄÜÁ¿
+	if(all_superCap_is_error())
 	{
-		return toe_is_error(GEN3CAP_TOE);
+		return 0.5;
 	}
-	else if(current_superCap == sCap23_ID) //SuperCap_ID
+	
+	if(current_superCap == ZiDaCap_ID)
 	{
-		return toe_is_error(SCAP_23_TOR); //SUPERCAP_TOE
+		return 0.5f;
 	}
-	else if(current_superCap == wulie_Cap_CAN_ID) //wulie_Cap_CAN_ID
+	else if(current_superCap == gen3Cap_ID)
 	{
-		return toe_is_error(WULIE_CAP_TOE);
+		return 0.5f;
+	}
+	else if(current_superCap == gen2Cap_ID)
+	{
+		return 0.5f;
 	}
 	else
 	{
-		return toe_is_error(SUPERCAP_TOE); //sCap23_ID
+		return 0.5f;
 	}
 }
 
-bool_t all_superCap_is_offline()
+// Please make sure relative_EBpct are calculated correctly using cal_capE_relative_pct(..)
+// ¸ø chassis energy regulate µÄº¯Êı relativeÖ¸Ïà¶ÔÓÚ×îĞ¡¿ÉÓÃÄÜÁ¿
+fp32 cer_get_current_cap_relative_pct()
 {
-	return toe_is_error(SUPERCAP_TOE) && toe_is_error(WULIE_CAP_TOE) && toe_is_error(SCAP_23_TOR);
-}
-
-/*
-SZL 3-10-2022 ÏÂ·¢µ½SuperCapµÄÊı¾İ
-SZL 12-27-2022 ĞÂÔöYiLin³¬¼¶µçÈİ
-*/
-void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr)
-{
-		uint32_t send_mail_box;
-    sCap23_tx_message.StdId = RMTypeC_Master_Command_ID;
-    sCap23_tx_message.IDE = CAN_ID_STD;
-    sCap23_tx_message.RTR = CAN_RTR_DATA;
-    sCap23_tx_message.DLC = 0x08;
-    sCap23_can_send_data[0] = max_pwr;
-    sCap23_can_send_data[1] = fail_safe_pwr;
-    sCap23_can_send_data[2] = 0;
-    sCap23_can_send_data[3] = 0;
-    sCap23_can_send_data[4] = 0; 
-    sCap23_can_send_data[5] = 0; 
-    sCap23_can_send_data[6] = 0; 
-    sCap23_can_send_data[7] = 0; 
-    HAL_CAN_AddTxMessage(&SCAP23_CAN, &sCap23_tx_message, sCap23_can_send_data, &send_mail_box);
-}
-
-void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode)
-{
-		uint32_t send_mail_box;
-    gen3Cap_tx_message.StdId = RMTypeC_Master_Command_ID_for_gen3Cap;
-    gen3Cap_tx_message.IDE = CAN_ID_STD;
-    gen3Cap_tx_message.RTR = CAN_RTR_DATA;
-    gen3Cap_tx_message.DLC = 0x08;
-    gen3Cap_can_send_data[0] = max_pwr;
-    gen3Cap_can_send_data[1] = fail_safe_pwr;
-    gen3Cap_can_send_data[2] = dcdc_enable;
-    gen3Cap_can_send_data[3] = dcdc_mode;
-    gen3Cap_can_send_data[4] = 0; 
-    gen3Cap_can_send_data[5] = 0; 
-    gen3Cap_can_send_data[6] = 0; 
-    gen3Cap_can_send_data[7] = 0; 
-    HAL_CAN_AddTxMessage(&SCAP23_CAN, &gen3Cap_tx_message, gen3Cap_can_send_data, &send_mail_box);
-}
-
-void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr)
-{
-		uint32_t send_mail_box;
-    superCap_tx_message.StdId = RMTypeC_Master_Command_ID;
-    superCap_tx_message.IDE = CAN_ID_STD;
-    superCap_tx_message.RTR = CAN_RTR_DATA;
-    superCap_tx_message.DLC = 0x08;
-    superCap_can_send_data[0] = max_pwr;
-    superCap_can_send_data[1] = fail_safe_pwr;
-    superCap_can_send_data[2] = 0;
-    superCap_can_send_data[3] = 0;
-    superCap_can_send_data[4] = 0; 
-    superCap_can_send_data[5] = 0; 
-    superCap_can_send_data[6] = 0; 
-    superCap_can_send_data[7] = 0; 
-    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &superCap_tx_message, superCap_can_send_data, &send_mail_box);
-}
-
-void CAN_command_wulie_Cap(uint16_t temPower)
-{
-		uint32_t send_mail_box;
-    wulie_Cap_tx_message.StdId = RMTypeC_Master_Command_ID_for_WuLie;
-    wulie_Cap_tx_message.IDE = CAN_ID_STD;
-    wulie_Cap_tx_message.RTR = CAN_RTR_DATA;
-    wulie_Cap_tx_message.DLC = 0x08;
-    wulieCap_can_send_data[0] = temPower >> 8;
-    wulieCap_can_send_data[1] = temPower;
-    wulieCap_can_send_data[2] = 0;
-    wulieCap_can_send_data[3] = 0;
-    wulieCap_can_send_data[4] = 0; 
-    wulieCap_can_send_data[5] = 0; 
-    wulieCap_can_send_data[6] = 0; 
-    wulieCap_can_send_data[7] = 0; 
-    HAL_CAN_AddTxMessage(&hcan1, &wulie_Cap_tx_message, wulieCap_can_send_data, &send_mail_box);
-}
-
-//·µ»ØÊı¾İÏà¹Ø
-void superCap_offline_proc()
-{
-		superCap_info.status = superCap_offline;
-		
+	// ÌØÊâÇé¿ö1: ÎŞ³¬¼¶µçÈİÔÚÏß - ÓÃµÄ»º³åÄÜÁ¿
+	if(all_superCap_is_error())
+	{
+		fp32 pct = get_chassis_buffer_energy() / 60.0f; // »º³åÄÜÁ¿ max ×îĞ¡60J
+		return pct;
+	}
 	
+	if(current_superCap == ZiDaCap_ID)
+	{
+		return zidaCap_info.relative_EBpct;
+	}
+	else if(current_superCap == gen2Cap_ID)
+	{
+		return gen2Cap_info.relative_EBpct;
+	}
+	else if(current_superCap == gen3Cap_ID)
+	{
+		return gen3Cap_info.relative_EBpct;
+	}
+	else
+	{
+		return wulieCap_info.relative_EBpct;
+	}
 }
 
-bool_t superCap_is_data_error_proc()
+fp32 simple_get_current_cap_pct()
 {
-		superCap_info.status = superCap_online;
-	
-		/*ICRA
-			Ö»ÅĞ¶ÏEBPct_fromCap£¬ÒòÎªÖ»ÓÃÕâ¸ö, Õâ¸öÊÇ0% ÕâÖÖ ²¢²»ÊÇ0.0 - 100.0
-			×¢ÒâEBPctÊÇ¿ÉÄÜ³¬¹ı100%µÄËùÒÔÔİÊ±°Ñ¼ì²éÊı¾İÊÇ·ñ³ö´í¸Ä³ÉÕâ¸öÑù×Ó -100.0 ~ 200.0
-			ÏÂÃæµÄsuperCap_solve_data_error_procÒ²ÓĞ¸ü¸Ä
-			ĞŞ¸ÄÒâ¼û: superCap_info ÕâÖÖÔ­Ê¼Êı¾İ ×îºÃ²»Òª¶¯Ëü Èç¹ûĞèÒªÊ¶±ğ²»ºÍÀïÊı¾İµÄµØ·½, ĞÂ½¨Ò»¸ö±äÁ¿ È»ºó¸³Öµ¸øÄÇ¸ö±äÁ¿
-	  */
-		if(superCap_info.EBPct_fromCap < -100.0f || superCap_info.EBPct_fromCap > 200.0f)
-		{
-			superCap_info.data_EBPct_status = SuperCap_dataIsError;
-			return 0;
-			
-		}
-		else
-		{
-			superCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
-			return 0;
-		}
-}
-
-void superCap_solve_data_error_proc()
-{
-		//ÒòÎªÆäÊıÖµ¿ÉÄÜ³¬¹ı100 ËùÒÔÔİÊ±°ÑÕâ¸ö¹¦ÄÜÆÁ±Îµô ICRA
-//		if(superCap_info.data_EBPct_status == SuperCap_dataIsError)
-//		{
-//			if(superCap_info.EBPct_fromCap < 0.0f)
-//				superCap_info.EBPct_fromCap = 0.0f;
-//			if(superCap_info.EBPct_fromCap > 100.0f)
-//				superCap_info.EBPct_fromCap = 100.0f;
-//		}
-		return;
-}
-
-//ÒÔÏÂÎªÒ×ÁÖ³¬¼¶µçÈİÏà¹Ø
-void sCap23_offline_proc()
-{
-		sCap23_info.status = superCap_offline;
-}
-
-bool_t sCap23_is_data_error_proc()
-{
-		sCap23_info.status = superCap_online;
-		//ÓÀÔ¶ return 0;
-		return 0;
-//		//ICRA
-//		//Ö»ÅĞ¶ÏEBPct_fromCap£¬ÒòÎªÖ»ÓÃÕâ¸ö, Õâ¸öÊÇ0% ÕâÖÖ ²¢²»ÊÇ0.0 - 100.0
-//		//×¢ÒâEBPctÊÇ¿ÉÄÜ³¬¹ı100%µÄËùÒÔÔİÊ±°Ñ¼ì²éÊı¾İÊÇ·ñ³ö´í¸Ä³ÉÕâ¸öÑù×Ó -100.0 ~ 200.0
-//		//ÏÂÃæµÄsuperCap_solve_data_error_procÒ²ÓĞ¸ü¸Ä
-//		if(superCap_info.EBPct_fromCap < -100.0f || superCap_info.EBPct_fromCap > 200.0f)
-//		{
-//			superCap_info.data_EBPct_status = SuperCap_dataIsError;
-//			return 1;
-//			
-//		}
-//		else
-//		{
-//			superCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
-//			return 0;
-//		}
-}
-
-//ÒÔÏÂÎªÅíî£µÚÈı´ú³¬¼¶µçÈİÏà¹Ø
-void gen3Cap_offline_proc()
-{
-		gen3Cap_info.status = superCap_offline;
-}
-
-bool_t gen3Cap_is_data_error_proc()
-{
-		gen3Cap_info.status = superCap_online;
-		//ÓÀÔ¶ return 0;
-		return 0;
-}
-
-
-//ÒÔÏÂÎªÎíÁĞÏà¹ØµÄ
-void wulie_Cap_offline_proc()
-{
-		wulie_Cap_info.status = superCap_offline;
-}
-
-bool_t wulie_Cap_is_data_error_proc()
-{
-		wulie_Cap_info.status = superCap_online;
-		//ÓÀÔ¶ return 0;
-		return 0;
-//		//ICRA
-//		//Ö»ÅĞ¶ÏEBPct_fromCap£¬ÒòÎªÖ»ÓÃÕâ¸ö, Õâ¸öÊÇ0% ÕâÖÖ ²¢²»ÊÇ0.0 - 100.0
-//		//×¢ÒâEBPctÊÇ¿ÉÄÜ³¬¹ı100%µÄËùÒÔÔİÊ±°Ñ¼ì²éÊı¾İÊÇ·ñ³ö´í¸Ä³ÉÕâ¸öÑù×Ó -100.0 ~ 200.0
-//		//ÏÂÃæµÄsuperCap_solve_data_error_procÒ²ÓĞ¸ü¸Ä
-//		if(superCap_info.EBPct_fromCap < -100.0f || superCap_info.EBPct_fromCap > 200.0f)
-//		{
-//			superCap_info.data_EBPct_status = SuperCap_dataIsError;
-//			return 1;
-//			
-//		}
-//		else
-//		{
-//			superCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
-//			return 0;
-//		}
+	//¼´²å¼´ÓÃµÄ³¬¼¶µçÈİ¿ØÖÆ°å ÅĞ¶Ï
+	 if(current_superCap == ZiDaCap_ID)
+	 {
+		 if(toe_is_error(ZIDACAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return zidaCap_info.EBPct_fromCap;
+			 //ui_info.cap_volt = zidaCap_info.VBKelvin_fromCap;
+		 }
+	 }
+	 else if(current_superCap == gen2Cap_ID)
+	 {
+		 if(toe_is_error(GEN2CAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return gen2Cap_info.EBPct;
+		   //ui_info.cap_volt = gen2Cap_info.Vbank_f;
+		 }
+	 }
+	 else
+	 {
+		 if(toe_is_error(WULIECAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return wulieCap_info.EBPct;
+		   //ui_info.cap_volt = wulieCap_info.cap_voltage;
+		 }
+	 }
 }
 
 //API for UI and other
-fp32 get_current_cap_voltage()
+fp32 ui_get_current_cap_voltage()
 {
 	//¼´²å¼´ÓÃµÄ³¬¼¶µçÈİ¿ØÖÆ°å ÅĞ¶Ï
-	 if(current_superCap == SuperCap_ID)
+	 if(current_superCap == ZiDaCap_ID)
 	 {
-		 if(toe_is_error(SUPERCAP_TOE))
+		 if(toe_is_error(ZIDACAP_TOE))
 		 {
 				return 0.0f;
 		 }
 		 else
 		 {
-			 //ui_info.cap_pct = superCap_info.EBPct_fromCap;
-			 return superCap_info.VBKelvin_fromCap;
+			 //ui_info.cap_pct = zidaCap_info.EBPct_fromCap;
+			 return zidaCap_info.VBKelvin_fromCap;
 		 }
 	 }
 	 else if(current_superCap == gen3Cap_ID)
 	 {
-		 if(toe_is_error(GEN3CAP_TOE))
+		 // toe_is_error(GEN3CAP_TOE) ³öÏÖerror codeÊ±ÈÔÏÔÊ¾µçÑ¹, OLED Ò²ÏÔÊ¾µçÑ¹, ÎŞ´ò¹´
+		 if(gen3Cap_info.status == superCap_offline)
 		 {
 			 //ui_info.cap_pct = 0.0f;
 			 //ui_info.cap_volt = 0.0f;
@@ -567,13 +684,13 @@ fp32 get_current_cap_voltage()
 		 }
 		 else
 		 {
-			 //ui_info.cap_pct = sCap23_info.EBPct;
+			 //ui_info.cap_pct = gen2Cap_info.EBPct;
 		   return gen3Cap_info.Vbank_f;
 		 }
 	 }
-	 else if(current_superCap == sCap23_ID)
+	 else if(current_superCap == gen2Cap_ID)
 	 {
-		 if(toe_is_error(SCAP_23_TOR))
+		 if(toe_is_error(GEN2CAP_TOE))
 		 {
 			 //ui_info.cap_pct = 0.0f;
 			 //ui_info.cap_volt = 0.0f;
@@ -581,13 +698,13 @@ fp32 get_current_cap_voltage()
 		 }
 		 else
 		 {
-			 //ui_info.cap_pct = sCap23_info.EBPct;
-		   return sCap23_info.Vbank_f;
+			 //ui_info.cap_pct = gen2Cap_info.EBPct;
+		   return gen2Cap_info.Vbank_f;
 		 }
 	 }
 	 else
 	 {
-		 if(toe_is_error(WULIE_CAP_TOE))
+		 if(toe_is_error(WULIECAP_TOE))
 		 {
 			 //ui_info.cap_pct = 0.0f;
 			 //ui_info.cap_volt = 0.0f;
@@ -596,100 +713,41 @@ fp32 get_current_cap_voltage()
 		 else
 		 {
 			 //ui_info.cap_pct = wulie_Cap_info.EBPct;
-		   return wulie_Cap_info.cap_voltage;
+		   return wulieCap_info.cap_voltage;
 		 }
 	 }
 }
 
-fp32 get_current_cap_pct()
-{
-	//¼´²å¼´ÓÃµÄ³¬¼¶µçÈİ¿ØÖÆ°å ÅĞ¶Ï
-	 if(current_superCap == SuperCap_ID)
-	 {
-		 if(toe_is_error(SUPERCAP_TOE))
-		 {
-			 //ui_info.cap_pct = 0.0f;
-			 //ui_info.cap_volt = 0.0f;
-			 return 0.0f;
-		 }
-		 else
-		 {
-			 return superCap_info.EBPct_fromCap;
-			 //ui_info.cap_volt = superCap_info.VBKelvin_fromCap;
-		 }
-	 }
-	 else if(current_superCap == sCap23_ID)
-	 {
-		 if(toe_is_error(SCAP_23_TOR))
-		 {
-			 //ui_info.cap_pct = 0.0f;
-			 //ui_info.cap_volt = 0.0f;
-			 return 0.0f;
-		 }
-		 else
-		 {
-			 return sCap23_info.EBPct;
-		   //ui_info.cap_volt = sCap23_info.Vbank_f;
-		 }
-	 }
-	 else
-	 {
-		 if(toe_is_error(WULIE_CAP_TOE))
-		 {
-			 //ui_info.cap_pct = 0.0f;
-			 //ui_info.cap_volt = 0.0f;
-			 return 0.0f;
-		 }
-		 else
-		 {
-			 return wulie_Cap_info.EBPct;
-		   //ui_info.cap_volt = wulie_Cap_info.cap_voltage;
-		 }
-	 }
-}
-
-///* »ñµÃ µ±Ç°ÔÚÏßµÄ³¬¼¶µçÈİ, µçÑ¹°Ù·Ö±È, 13vÊ±Îª0%
-//*/
-//fp32 get_current_cap_voltage_pct()
-//{
-//}
-extern RC_ctrl_t rc_ctrl;
-/* ¼ÆËã »ñµÃ µ±Ç°ÔÚÏßµÄ³¬¼¶µçÈİ, ÄÜÁ¿(½¹¶ú)°Ù·Ö±È, 13vÊ±Îª0%
-*/
-//callÊ± È·±£ ²ÎÊıµÄÕıÈ·ĞÔ
-fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol)
-{
-	return fp32_constrain( ( (curr_vol - min_vol) * (curr_vol - min_vol) ) / ( (max_vol - min_vol) * (max_vol - min_vol) ), 0.0f, 1.0f);
-}
-
-fp32 get_current_capE_relative_pct()
+// for ui, relative_EBpct are calculated correctly using cal_capE_relative_pct(..) relativeÖ¸Ïà¶ÔÓÚ×îĞ¡¿ÉÓÃÄÜÁ¿
+fp32 ui_get_current_cap_relative_pct()
 {
 //		return fp32_constrain( fabs((fp32) rc_ctrl.rc.ch[3]) / 660.0f, 0.0f, 1.0f);
 		//¼´²å¼´ÓÃµÄ³¬¼¶µçÈİ¿ØÖÆ°å ÅĞ¶Ï
-		if(current_superCap == SuperCap_ID)
+		if(current_superCap == ZiDaCap_ID)
 		{
-			 if(toe_is_error(SUPERCAP_TOE))
+			 if(toe_is_error(ZIDACAP_TOE))
 			 {
 				 return 0.0f;
 			 }
 			 else
 			 {
-				 return superCap_info.relative_EBpct;
+				 return zidaCap_info.relative_EBpct;
 			 }
 		 }
-		 else if(current_superCap == sCap23_ID)
+		 else if(current_superCap == gen2Cap_ID)
 		 {
-			 if(toe_is_error(SCAP_23_TOR))
+			 if(toe_is_error(GEN2CAP_TOE))
 			 {
 				 return 0.0f;
 			 }
 			 else
 			 {
-				 return sCap23_info.relative_EBpct;
+				 return gen2Cap_info.relative_EBpct;
 			 }
 		 }
 		 else if(current_superCap == gen3Cap_ID)
 		 {
+			 // ³öÏÖerror codeÊ± °Ù·Ö±ÈÏÔ0
 			 if(toe_is_error(GEN3CAP_TOE))
 			 {
 				 //ui_info.cap_pct = 0.0f;
@@ -698,24 +756,19 @@ fp32 get_current_capE_relative_pct()
 			 }
 			 else
 			 {
-				 //ui_info.cap_pct = sCap23_info.EBPct;
+				 //ui_info.cap_pct = gen2Cap_info.EBPct;
 				 return gen3Cap_info.relative_EBpct;
 			 }
 		 }
 		 else
 		 {
-			 if(toe_is_error(WULIE_CAP_TOE))
+			 if(toe_is_error(WULIECAP_TOE))
 			 {
 				 return 0.0f;
 			 }
 			 else
 			 {
-				 return wulie_Cap_info.relative_EBpct;
+				 return wulieCap_info.relative_EBpct;
 			 }
 		 }
-}
-
-supercap_can_msg_id_e get_current_superCap()
-{
-		return current_superCap;
 }

@@ -503,8 +503,8 @@ static void gimbal_behavour_set(gimbal_control_t *gimbal_mode_set)
         }
 
         //超过初始化最大时间，或者已经稳定到中值一段时间，退出初始化状态开关打下档，或者掉线
-        if (init_time < GIMBAL_INIT_TIME && init_stop_time < GIMBAL_INIT_STOP_TIME &&
-            !switch_is_down(gimbal_mode_set->gimbal_rc_ctrl->rc.s[GIMBAL_MODE_CHANNEL]) && !toe_is_error(DBUS_TOE))
+				if (init_time < GIMBAL_INIT_TIME && init_stop_time < GIMBAL_INIT_STOP_TIME &&
+            !switch_is_down(gimbal_mode_set->gimbal_rc_ctrl[TEMP].rc.switch_right) && !toe_is_error(DBUS_TOE))
         {
             return;
         }
@@ -516,15 +516,15 @@ static void gimbal_behavour_set(gimbal_control_t *gimbal_mode_set)
     }
 
     //开关控制 云台状态
-    if (switch_is_down(gimbal_mode_set->gimbal_rc_ctrl->rc.s[GIMBAL_MODE_CHANNEL]))
+    if (switch_is_down(gimbal_mode_set->gimbal_rc_ctrl[TEMP].rc.switch_right))
     {
         gimbal_behaviour = GIMBAL_ZERO_FORCE;
     }
-    else if (switch_is_mid(gimbal_mode_set->gimbal_rc_ctrl->rc.s[GIMBAL_MODE_CHANNEL]))
+    else if (switch_is_mid(gimbal_mode_set->gimbal_rc_ctrl[TEMP].rc.switch_right))
     {
         gimbal_behaviour = GIMBAL_RELATIVE_ANGLE;
     }
-    else if (switch_is_up(gimbal_mode_set->gimbal_rc_ctrl->rc.s[GIMBAL_MODE_CHANNEL]))
+    else if (switch_is_up(gimbal_mode_set->gimbal_rc_ctrl[TEMP].rc.switch_right))
     {
 //				gimbal_behaviour = GIMBAL_ABSOLUTE_ANGLE;
 //				if(miniPC_info.autoAimFlag == 2 && miniPC_info.cv_status == 2)
@@ -535,7 +535,7 @@ static void gimbal_behavour_set(gimbal_control_t *gimbal_mode_set)
 				{
 					gimbal_behaviour = GIMBAL_ABSOLUTE_ANGLE;
 				}
-			  else if(get_autoAimFlag() == 2 && is_enemy_detected_with_pc_toe()) //(get_autoAimFlag() == 2 && get_cv_gimbal_sts() == 2 && get_enemy_detected())
+			  else if(get_auto_aim_mode() == AUTO_AIM_LOCK && is_enemy_detected_with_pc_toe()) //(get_autoAimFlag() == 2 && get_cv_gimbal_sts() == 2 && get_enemy_detected())
 				{
 					gimbal_behaviour = GIMBAL_MINIPC_AUTOAIM_LOCK;
 				}
@@ -728,8 +728,8 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
 
     static int16_t yaw_channel = 0, pitch_channel = 0;
 
-    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl->rc.ch[YAW_CHANNEL], yaw_channel, RC_DEADBAND);
-    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl->rc.ch[PITCH_CHANNEL], pitch_channel, RC_DEADBAND);
+    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl[TEMP].rc.rocker_l_, yaw_channel, RC_DEADBAND); //gimbal_control_set->gimbal_rc_ctrl->rc.ch[YAW_CHANNEL]
+    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl[TEMP].rc.rocker_l1, pitch_channel, RC_DEADBAND); //gimbal_control_set->gimbal_rc_ctrl->rc.ch[PITCH_CHANNEL] 
   
 		//掉线 数据保护
 		if(toe_is_error(PC_TOE))
@@ -742,7 +742,7 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
 		}
 		else
 		{
-			if(get_autoAimFlag() == 1) //(miniPC_info.autoAimFlag == 1) //&& (miniPC_info.cv_status == 0x01))
+			if(get_auto_aim_mode() == AUTO_AIM_AID) //(miniPC_info.autoAimFlag == 1) //&& (miniPC_info.cv_status == 0x01))
 			{ 
 				//old code:
 //				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN + miniPC_info.yawMove_aid;
@@ -755,7 +755,7 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
 				gimbal_control_set->gimbal_pitch_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_pitch_motor.absolute_angle;
 				//待添加reset pid
 			} 
-			else if(get_autoAimFlag() == 0) //(miniPC_info.autoAimFlag == 0)
+			else if(get_auto_aim_mode() == AUTO_AIM_OFF) //(miniPC_info.autoAimFlag == 0)
 			{
 	//    *yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
 	//    *pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;
@@ -916,8 +916,8 @@ static void gimbal_relative_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
     }
     static int16_t yaw_channel = 0, pitch_channel = 0;
 
-    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl->rc.ch[YAW_CHANNEL], yaw_channel, RC_DEADBAND);
-    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl->rc.ch[PITCH_CHANNEL], pitch_channel, RC_DEADBAND);
+    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl[TEMP].rc.rocker_l_, yaw_channel, RC_DEADBAND);
+    rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl[TEMP].rc.rocker_l1, pitch_channel, RC_DEADBAND);
 
     *yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
     *pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;

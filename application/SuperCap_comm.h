@@ -5,14 +5,13 @@
 #include "CAN_receive.h"
 
 #define SUPERCAP_CAN hcan1
-#define SCAP23_CAN hcan1
 
 ///*以下两个Texas不使用*/
 //#define ICRA_superCap_max_power 65//40
 //#define ICRA_superCap_fail_safe_power 65//40
 
 //发送给超级电容数据数值限制
-#define CMD_CHARGE_PWR_MAX 155
+#define CMD_CHARGE_PWR_MAX 160
 #define CMD_CHARGE_PWR_MIN 45
 
 /*超级电容电容组数据*/
@@ -34,59 +33,31 @@
 #define MIN_VOLTAGE_ZIDA_CAP 13.0f
 #define CAPACITY_ZIDA_CAP 6.0f
 
-extern uint8_t debug_max_pwr;
-extern uint8_t debug_fail_safe_pwr;
-extern void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr);
-extern void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr);
-extern void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode);
-extern void CAN_command_wulie_Cap(uint16_t temPower);
-extern void superCap_offline_proc(void);
-extern bool_t superCap_is_data_error_proc(void);
-extern void superCap_solve_data_error_proc(void);
-extern void superCap_comm_bothway_init(void);
-extern void superCap_control_loop(void);
-
-extern void wulie_Cap_offline_proc(void);
-extern bool_t wulie_Cap_is_data_error_proc(void);
-extern void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank);
-extern uint16_t get_superCap_charge_pwr(void);
-extern bool_t current_superCap_is_offline(void);
-extern bool_t all_superCap_is_offline(void);
-
-extern void sCap23_offline_proc(void);
-extern bool_t sCap23_is_data_error_proc(void);
-
-extern void gen3Cap_offline_proc(void);
-extern bool_t gen3Cap_is_data_error_proc(void);
-
-extern fp32 get_current_cap_voltage(void);
-extern fp32 get_current_cap_pct(void);
-
 typedef enum
 {
 	/*TypeC -> SuperCap 时 CAN报文 即指令的ID
-	(1)TypeC -> SuperCapZida (2)TypeC -> SuperCap23, sCap23
+	(1)TypeC -> SuperCapZida (2)TypeC -> gen2Cap
 	*/
 	 RMTypeC_Master_Command_ID = 0x4FF,
 	
 	// TypeC到gen3Cap_ID 的CAN报文
-	RMTypeC_Master_Command_ID_for_gen3Cap = 0x3FF,
+	RMTypeC_Master_Command_ID_for_gen3Cap = 0x108, //0x3FF,
 	
 	//SuperCap -> TypeC时 CAN报文 即反馈报文的ID:
-	 SuperCap_ID = 0x500,
+	 ZiDaCap_ID = 0x500,
 	
-	//sCap23易林超级电容 -> TypeC
-	 sCap23_ID = 0x501,
+	//gen2Cap 易林超级电容 -> TypeC
+	 gen2Cap_ID = 0x501,
 	
 	 //彭睿 第三代超级电容 -> TypeC
-	 gen3Cap_ID = 0x503,
+	 gen3Cap_ID = 0x109, //0x503
 	
 	//雾列的控制板
 	//TypeC -> wulie Cap
 	RMTypeC_Master_Command_ID_for_WuLie = 0x210,
 	
 	//wulie Cap -> TypeC
-	wulie_Cap_CAN_ID = 0x211,
+	WuLieCap_CAN_ID = 0x211,
 }supercap_can_msg_id_e;
 
 typedef enum
@@ -123,13 +94,9 @@ typedef struct
 		uint8_t array[2];
 	}msg_u_EBPct, msg_u_VBKelvin;
 	
-	uint8_t a;
-	uint8_t b;
-	uint8_t c;
-	
 	fp32 relative_EBpct; // 相对于最低电压的百分比
 	
-}superCap_info_t;
+}zidaCap_info_t; // ZiDa 超级电容
 
 /*12-27-2022新增 易林 超级电容
 superCap23_info_t;
@@ -163,7 +130,15 @@ typedef struct
 	
 	fp32 relative_EBpct; // 相对于最低电压的百分比
 	
-}sCap23_info_t;
+}gen2Cap_info_t;
+
+typedef enum 
+{
+	CAP_NORMAL = 0,    //正常
+	CAP_VOLTAGE_SHUTDOWN = 1, //输入电压异常
+	CAP_TEMP_SHUTDOWN = 2,       //过热
+	CAP_CURRENT_SHUTDOWN = 3, //过流
+}cap_Pflag_e;
 
 typedef struct
 {
@@ -175,13 +150,14 @@ typedef struct
 	uint8_t fail_safe_charge_pwr_command; //P-failsafe
 	uint8_t dcdc_enable;
 	uint8_t dcdc_mode;
+	uint16_t buffer_energy; // 从裁判系统获取的buffer energy
 	
 	//接收到的 经过转换后的数据
 	fp32 PowerData[3];
 	fp32 Vbank_f;
 	fp32 Pchassis_f;
 	fp32 Pmax_f;
-	uint8_t Pflag;
+	cap_Pflag_e Pflag;
 	
 	//其它FSM 和 变量
 	superCap_connection_status_e status;
@@ -194,7 +170,7 @@ typedef struct
 	//裁判系统
 	uint8_t power_management_chassis_output; // 0为无输出, 1为24v
 	
-}gen3Cap_info_t;
+}gen3Cap_info_t; // PR 第三代超级电容
 
 typedef struct
 {
@@ -219,13 +195,44 @@ typedef struct
 
 }wulieCap_info_t;
 
-extern superCap_info_t superCap_info;
-extern uint8_t debug_a;
-extern uint8_t debug_b;
-extern uint8_t debug_c;
+extern zidaCap_info_t zidaCap_info;
 
 extern fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol);
-extern fp32 get_current_capE_relative_pct(void);
+
+extern void CAN_command_zidaCap(uint8_t max_pwr, uint8_t fail_safe_pwr);
+extern void CAN_command_gen2Cap(uint8_t max_pwr, uint8_t fail_safe_pwr);
+extern void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode, uint16_t buffer_energy);
+extern void CAN_command_wulieCap(uint16_t temPower);
+extern void zidaCap_offline_proc(void);
+extern bool_t zidaCap_is_data_error_proc(void);
+extern void zidaCap_solve_data_error_proc(void);
+extern void superCap_comm_bothway_init(void);
+extern void superCap_control_loop(void);
+
+extern void wulieCap_offline_proc(void);
+extern bool_t wulieCap_is_data_error_proc(void);
+
+extern bool_t current_superCap_is_offline(void);
+extern bool_t all_superCap_is_error(void);
+
+extern void gen2Cap_offline_proc(void);
+extern bool_t gen2Cap_is_data_error_proc(void);
+
+extern void gen3Cap_offline_proc(void);
+extern bool_t gen3Cap_is_data_error_proc(void);
+
+extern void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank);
+extern uint16_t cpc_get_superCap_charge_pwr(void);
+extern fp32 cpc_get_gen3Cap_Pmax(void);
+extern cap_Pflag_e get_gen3Cap_P_Flag(void);
+
+extern fp32 cer_get_current_cap_boost_mode_pct_threshold(void);
+extern fp32 cer_get_current_cap_relative_pct(void);
+
+extern fp32 ui_get_current_cap_voltage(void);
+extern fp32 simple_get_current_cap_pct(void);
+
+extern fp32 ui_get_current_cap_relative_pct(void);
 extern supercap_can_msg_id_e get_current_superCap(void);
 
 #endif /*__SUPERCAP_COMM_H___*/

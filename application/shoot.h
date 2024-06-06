@@ -18,7 +18,7 @@
 #ifndef SHOOT_H
 #define SHOOT_H
 #include "struct_typedef.h"
-
+#include "ramp_function.h"
 #include "CAN_receive.h"
 #include "gimbal_task.h"
 #include "remote_control.h"
@@ -279,6 +279,7 @@ typedef struct
 		uint16_t press_key_V_time; 
 	
 		user_fire_ctrl_e user_fire_ctrl;
+	  user_fire_ctrl_e last_user_fire_ctrl;
     const RC_ctrl_t *shoot_rc;
     const motor_measure_t *shoot_motor_measure;
     ramp_function_source_t fric1_ramp;

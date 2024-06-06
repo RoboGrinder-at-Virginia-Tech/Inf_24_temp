@@ -609,11 +609,6 @@
               <FilePath>..\application\chassis_task.c</FilePath>
             </File>
             <File>
-              <FileName>chassis_behaviour.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\chassis_behaviour.c</FilePath>
-            </File>
-            <File>
               <FileName>detect_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\detect_task.c</FilePath>
@@ -647,6 +642,31 @@
               <FileName>referee_usart_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\referee_usart_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>referee_ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\referee_ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>referee_ui.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\referee_ui.h</FilePath>
+            </File>
+            <File>
+              <FileName>referee_ui_coordinate_info.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\referee_ui_coordinate_info.h</FilePath>
+            </File>
+            <File>
+              <FileName>referee_interact_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\referee_interact_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>referee_interact_task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\referee_interact_task.h</FilePath>
             </File>
             <File>
               <FileName>remote_control.c</FileName>
@@ -692,21 +712,6 @@
               <FileName>SuperCap_comm.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\application\SuperCap_comm.h</FilePath>
-            </File>
-            <File>
-              <FileName>client_ui_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\client_ui_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>client_ui_task.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\application\client_ui_task.h</FilePath>
-            </File>
-            <File>
-              <FileName>client_ui_coordinate_info.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\application\client_ui_coordinate_info.h</FilePath>
             </File>
             <File>
               <FileName>miniPC_comm_task.c</FileName>
@@ -757,6 +762,16 @@
               <FileName>odometer_task.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\application\odometer_task.h</FilePath>
+            </File>
+            <File>
+              <FileName>chassis_energy_regulate.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\chassis_energy_regulate.c</FilePath>
+            </File>
+            <File>
+              <FileName>chassis_energy_regulate.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\chassis_energy_regulate.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -832,6 +847,36 @@
               <FileName>kalman_filter.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\components\algorithm\kalman_filter.h</FilePath>
+            </File>
+            <File>
+              <FileName>lowpass_filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\lowpass_filter.c</FilePath>
+            </File>
+            <File>
+              <FileName>lowpass_filter.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\algorithm\lowpass_filter.h</FilePath>
+            </File>
+            <File>
+              <FileName>ramp_function.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\ramp_function.c</FilePath>
+            </File>
+            <File>
+              <FileName>ramp_function.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\algorithm\ramp_function.h</FilePath>
+            </File>
+            <File>
+              <FileName>linear_throttle.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\linear_throttle.c</FilePath>
+            </File>
+            <File>
+              <FileName>linear_throttle.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\algorithm\linear_throttle.h</FilePath>
             </File>
           </Files>
         </Group>

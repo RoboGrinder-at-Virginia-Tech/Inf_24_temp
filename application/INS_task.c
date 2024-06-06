@@ -41,7 +41,7 @@
 #include "detect_task.h"
 
 #include "user_lib.h"
-
+#include "lowpass_filter.h"
 #include "odometer_task.h"
 
 

@@ -25,7 +25,7 @@
 #include "arm_math.h"
 #include "user_lib.h"
 #include "referee.h"
-
+#include "ramp_function.h"
 #include "CAN_receive.h"
 #include "gimbal_behaviour.h"
 #include "detect_task.h"
@@ -35,7 +35,7 @@
 #include "miniPC_msg.h"
 #include "prog_msg_utility.h"
 #include "odometer_task.h"
-
+#include "referee_interact_task.h"
 #include "stdlib.h"
 
 #define shoot_fric1_on(pwm) fric1_on((pwm)) //摩擦轮1pwm宏定义
@@ -437,33 +437,33 @@ static void shoot_set_mode(void)
     static int8_t last_s = RC_SW_UP;
 
     //上拨判断， 一次开启，再次关闭
-    if ((switch_is_up(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]) && !switch_is_up(last_s) && shoot_control.shoot_mode == SHOOT_STOP))
+		if ((switch_is_up(shoot_control.shoot_rc[TEMP].rc.switch_left) && !switch_is_up(last_s) && shoot_control.shoot_mode == SHOOT_STOP))
     {
         shoot_control.shoot_mode = SHOOT_READY_FRIC;//上拨一次开启摩擦轮
 			  shoot_control.user_fire_ctrl = user_SHOOT_SEMI;//开启摩擦轮 默认auto
 			  shoot_control.key_Q_cnt = 2;
     }
-    else if ((switch_is_up(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]) && !switch_is_up(last_s) && shoot_control.shoot_mode != SHOOT_STOP))
+    else if ((switch_is_up(shoot_control.shoot_rc[TEMP].rc.switch_left) && !switch_is_up(last_s) && shoot_control.shoot_mode != SHOOT_STOP))
     {
         shoot_control.shoot_mode = SHOOT_STOP;//上拨一次再关闭摩擦轮
 			  shoot_control.key_Q_cnt = 0;
     }
 				
     //处于中档， 可以使用键盘开启摩擦轮
-    if (switch_is_mid(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]) && (shoot_control.shoot_rc->key.v & SHOOT_ON_KEYBOARD) && shoot_control.shoot_mode == SHOOT_STOP)
+		if (switch_is_mid(shoot_control.shoot_rc[TEMP].rc.switch_left) && (shoot_control.shoot_rc[TEMP].key[KEY_PRESS].q) && shoot_control.shoot_mode == SHOOT_STOP)
     {
         shoot_control.shoot_mode = SHOOT_READY_FRIC; 
 				shoot_control.user_fire_ctrl = user_SHOOT_AUTO;//开启摩擦轮 默认auto
     }
     //处于中档， 可以使用键盘关闭摩擦轮
-    else if (switch_is_mid(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]) && (shoot_control.shoot_rc->key.v & SHOOT_OFF_KEYBOARD) && shoot_control.shoot_mode != SHOOT_STOP)
+    else if (switch_is_mid(shoot_control.shoot_rc[TEMP].rc.switch_left) && (shoot_control.shoot_rc[TEMP].key[KEY_PRESS].e) && shoot_control.shoot_mode != SHOOT_STOP)
     {
         shoot_control.shoot_mode = SHOOT_STOP;
 			  shoot_control.key_Q_cnt = 0;
     }
 
 		//处于中档时的 按键Q 按下检测 即 用户火控状态 模式判断
-		if(switch_is_mid(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]) && (shoot_control.shoot_rc->key.v & SHOOT_ON_KEYBOARD) && (shoot_control.shoot_mode > SHOOT_STOP))
+		if(switch_is_mid(shoot_control.shoot_rc[TEMP].rc.switch_left) && (shoot_control.shoot_rc[TEMP].key[KEY_PRESS].q) && (shoot_control.shoot_mode > SHOOT_STOP))
 		{
 				//shoot_control.key_Q_cnt++;
 				if(shoot_control.last_key_Q_sts == 0)
@@ -500,6 +500,15 @@ static void shoot_set_mode(void)
 			shoot_control.user_fire_ctrl = user_SHOOT_OFF;
 		}
 		//---------Q按键计数以及相关检测结束---------
+		
+		//--------- 基于 user_fire_ctrl 的对UI的绘制 开始 ---------
+		if (shoot_control.last_user_fire_ctrl != shoot_control.user_fire_ctrl)
+		{
+			set_interactive_flag_shoot_mode_flag(1);
+		}
+		shoot_control.last_user_fire_ctrl = shoot_control.user_fire_ctrl;
+		//--------- 基于 user_fire_ctrl 的对UI的绘制 结束 ---------
+		
 		/*这里是对老DJI开源代码的兼容 - 通过按键 低通滤波值 之前的shoot_mode, 前面有(按键<-map->user_fire_ctrl);
 			先对当前 shoot_mode 赋值一次(按键其它<-map->shoot_mode), 后面根据user_fire_ctrl会给shoot_mode赋值第二次(user_fire_mode<-map->shoot_mode) - 是因为shoot_mode切换很快, 控制会直接用这个状态机
 			实现多个user_fire_ctrl映射到有限个shoot_mode - 按键扫描还可以优化*/
@@ -520,7 +529,7 @@ static void shoot_set_mode(void)
 			if(shoot_control.trigger_motor_17mm_is_online)//发射机构断电时, shoot_mode状态机不会被置为发射相关状态
 			{
         //下拨一次或者鼠标按下一次，进入射击状态
-        if ((switch_is_down(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]) && !switch_is_down(last_s)) || (shoot_control.press_l && shoot_control.last_press_l == 0))
+        if ((switch_is_down(shoot_control.shoot_rc[TEMP].rc.switch_left) && !switch_is_down(last_s)) || (shoot_control.press_l && shoot_control.last_press_l == 0))
         {
             //shoot_control.shoot_mode = SHOOT_BULLET;
 					  shoot_control.shoot_mode = SHOOT_3_BULLET;
@@ -551,7 +560,7 @@ static void shoot_set_mode(void)
 	*/
 		
 		/*更改自瞄开启逻辑  X按键计数*/
-		if(shoot_control.shoot_rc->key.v & KEY_PRESSED_OFFSET_X)
+		if(shoot_control.shoot_rc[TEMP].key[KEY_PRESS].x)
 		{
 			if(shoot_control.last_key_X_sts == 0)
 			{
@@ -576,21 +585,21 @@ static void shoot_set_mode(void)
 		//或 即按键只能开启aim
 		if(shoot_control.key_X_cnt == 0)
 		{
-			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
+			set_auto_aim_mode(AUTO_AIM_OFF); //miniPC_info.autoAimFlag = 0;
 		}
 		else if(shoot_control.key_X_cnt == 1) 
 		{
-			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
+			set_auto_aim_mode(AUTO_AIM_AID); //miniPC_info.autoAimFlag = 1;
 		}
 		else if(shoot_control.key_X_cnt == 2)
 		{
 			//miniPC_info.autoAimFlag = 2;
-			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
+			set_auto_aim_mode(AUTO_AIM_AID); //miniPC_info.autoAimFlag = 1;
 		}
 		
-		if(shoot_control.press_r_time == PRESS_LONG_TIME_R || shoot_control.press_key_V_time == PRESS_LONG_TIME_V)
+		if(shoot_control.press_r_time == PRESS_LONG_TIME_R)
 		{
-			set_autoAimFlag(2); //miniPC_info.autoAimFlag = 2;
+			set_auto_aim_mode(AUTO_AIM_LOCK); //miniPC_info.autoAimFlag = 2;
 			//shoot_control.key_X_cnt = 2;
 		}
 //		else
@@ -599,9 +608,9 @@ static void shoot_set_mode(void)
 //			shoot_control.key_X_cnt = 1;
 //		}
 		
-		if(shoot_control.shoot_rc->key.v & KEY_PRESSED_OFFSET_C) // press C to turn off auto aim
+		if(shoot_control.shoot_rc[TEMP].key[KEY_PRESS].z) // press Z to turn off auto aim
 		{
-			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
+			set_auto_aim_mode(AUTO_AIM_OFF); //miniPC_info.autoAimFlag = 0;
 			shoot_control.key_X_cnt = 0;
 		}
 		//X按键计数以及相关检测结束
@@ -622,7 +631,7 @@ static void shoot_set_mode(void)
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
-					else if( ( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) )
+					else if( ( (get_shootCommand() == 0xff) && (get_auto_aim_mode() > 0) ) )
 					{
 						shoot_control.shoot_mode = SHOOT_3_BULLET;
 						shoot_control.burst_counter = 0;
@@ -640,7 +649,7 @@ static void shoot_set_mode(void)
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
-					else if(( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ))
+					else if(( (get_shootCommand() == 0xff) && (get_auto_aim_mode() > 0) ))
 					{
 						shoot_control.shoot_mode = SHOOT_3_BULLET;
 						shoot_control.burst_counter = 0;
@@ -654,7 +663,7 @@ static void shoot_set_mode(void)
 				else
 				{
 					// default case
-					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					if (( (get_shootCommand() == 0xff) && (get_auto_aim_mode() > 0) ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
@@ -704,7 +713,7 @@ static void shoot_set_mode(void)
 //        shoot_control.shoot_mode = SHOOT_STOP;
 //    }
 
-    last_s = shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL];
+    last_s = shoot_control.shoot_rc[TEMP].rc.switch_left;
 }
 /**
   * @brief          射击数据更新
@@ -785,7 +794,7 @@ static void shoot_feedback_update(void)
 		//其实可以把所有按键相关状态机放到这里 从set mode中移到这里面 虽然会有耦合
 		
 		//按键V记时, V只是记录了上一次状态, 但是没有计数
-		if(shoot_control.shoot_rc->key.v & KEY_PRESSED_OFFSET_V)
+		if(shoot_control.shoot_rc[TEMP].key[KEY_PRESS].v)
 		{
 			if(shoot_control.press_key_V_time < PRESS_LONG_TIME_V)
 			{
@@ -829,7 +838,7 @@ static void shoot_feedback_update(void)
     }
 
     //射击开关下档时间计时
-    if (shoot_control.shoot_mode != SHOOT_STOP && switch_is_down(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]))
+    if (shoot_control.shoot_mode != SHOOT_STOP && switch_is_down(shoot_control.shoot_rc[TEMP].rc.switch_left))
     {
 
         if (shoot_control.rc_s_time < RC_S_LONG_TIME)

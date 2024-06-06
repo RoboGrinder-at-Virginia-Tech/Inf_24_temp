@@ -17,35 +17,8 @@
 #define mat_inv_f64 arm_mat_inverse_f64
 #endif
 
-typedef __packed struct
-{
-    fp32 input;        //输入数据
-    fp32 out;          //输出数据
-    fp32 min_value;    //限幅最小值
-    fp32 max_value;    //限幅最大值
-		fp32 max_value_constant; // 限幅最大值的常量, 限幅最大值可能会动态的变动, 取决于应用场景
-    fp32 frame_period; //时间间隔
-} ramp_function_source_t;
-
-typedef __packed struct
-{
-    fp32 input;        //输入数据
-    fp32 out;          //滤波输出的数据
-    fp32 num[1];       //滤波参数
-    fp32 frame_period; //滤波的时间间隔 单位 s
-} first_order_filter_type_t;
 //快速开方
 extern fp32 invSqrt_user_lib(fp32 num);
-
-//斜波函数初始化
-void ramp_init(ramp_function_source_t *ramp_source_type, fp32 frame_period, fp32 max, fp32 min);
-
-//斜波函数计算
-void ramp_calc(ramp_function_source_t *ramp_source_type, fp32 input);
-//一阶滤波初始化
-extern void first_order_filter_init(first_order_filter_type_t *first_order_filter_type, fp32 frame_period, const fp32 num[1]);
-//一阶滤波计算
-extern void first_order_filter_cali(first_order_filter_type_t *first_order_filter_type, fp32 input);
 //绝对限制
 extern void abs_limit(fp32 *num, fp32 Limit);
 //判断符号位

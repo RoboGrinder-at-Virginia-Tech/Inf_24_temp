@@ -32,32 +32,20 @@
 
 //底盘初始状态时 功率限制 也就是最低功率
 #ifdef HERO_CHASSIS_POWER_CONTROL
-#define INITIAL_STATE_CHASSIS_POWER_LIM 50.0f
+#define INITIAL_STATE_CHASSIS_POWER_LIM 55.0f
 #else
-#define INITIAL_STATE_CHASSIS_POWER_LIM 40.0f
+#define INITIAL_STATE_CHASSIS_POWER_LIM 45.0f
 #endif
 
-#define MAX_REASONABLE_CHARGE_PWR 130
+#define MAX_REASONABLE_CHARGE_PWR 160
 
 /*
-原始参数:
-#define POWER_LIMIT         500.0f//500
-#define WARNING_POWER       300.0f //40.0f   
-#define WARNING_POWER_BUFF  50.0f   
-
 WARNING_POWER需要小于POWER_LIMIT
 5<chassis_power_buffer<(WARNING_POWER_BUFF=40)时, 只是*debuf => 做减缓处理 <=> buffer_debuff_total_current_limit * power_scale
 buffer_debuff_total_current_limit 代表了这种情况下允许的 最大 功率(极限)
 
 <5时, 保证不能再用缓冲能量了
-7-10-2022 备份数值
-#define POWER_LIMIT         500.0f//500
-#define WARNING_POWER       300.0f//40.0f   
-#define WARNING_POWER_BUFF  40.0f//50.0f   
 
-#define NO_JUDGE_TOTAL_CURRENT_LIMIT    64000.0f    //16000 * 4, 
-#define BUFFER_TOTAL_CURRENT_LIMIT      16000.0f
-#define POWER_TOTAL_CURRENT_LIMIT       20000.0f
 其它注释:
 64000.0f = 16000 * 4, 16000指16A
 
@@ -75,10 +63,6 @@ buffer_debuff_total_current_limit 代表了这种情况下允许的 最大 功率(极限)
 
 //Speed-adaptive chassis power control; related parameter
 /*调整了一次参数: 调整之前:
-#define WARNING_ENERGY_BUFF  40.0f 
-#define MINIMUM_ENERGY_BUFF 10.0f //设定缓冲能量 危险值
-...
-#define ENERGY_BUFF_OUTPUT_CUTOFF_POINT 3.0f
 */
 #define WARNING_ENERGY_BUFF  30.0f//35.0f //40.0f 
 #define MINIMUM_ENERGY_BUFF  10.0f //10.0f //设定缓冲能量 危险值
@@ -92,40 +76,44 @@ buffer_debuff_total_current_limit 代表了这种情况下允许的 最大 功率(极限)
 //裁判系统功率 缓冲能量信息 间隔; 实时功率热量数据：0x0202。发送频率：50Hz; 即0.02s
 #define CHASSIS_REFEREE_COMM_TIME 0.02f;
 
-/*
-7-28-2022 之前参数:
-#define superCap_WARNING_ENERGY_BUFF 1500.0f
-#define superCap_MINIMUM_ENERGY_BUFF 700.0f
-#define superCap_MAX_POWER_VALUE 300.0f
+/*speed-adaptive chassis power control 相关参数*/
+#define gen3Cap_WARNING_ENERGY_BUFF 1200.0f //1500.0f deprecated
+#define gen3Cap_MINIMUM_ENERGY_BUFF 750.0f //700.0f deprecated
+#define gen3Cap_WARNING_VOL 13.0f //20.0f //对应superCap_WARNING_ENERGY_BUFF
+#define gen3Cap_MINIMUM_VOL 6.5f //15.81f //superCap_MINIMUM_ENERGY_BUFF
 
-#define superCap_ENERGY_BUFF_OUTPUT_CUTOFF_POINT 650.0f
+#define gen3Cap_MAX_POWER_VALUE 400.0f//300.0f
+#define gen3Cap_LARGE_POWER_VALUE 300.0f
+#define gen3Cap_MEDIUM_POWER_VALUE 200.0f
+#define gen3Cap_SMALL_POWER_VALUE 100.0f
 
-7-21-2022 用超级电容的功率控制; speed-adaptive chassis power control
-*/
-#define superCap_WARNING_ENERGY_BUFF 1200.0f //1500.0f
-#define superCap_MINIMUM_ENERGY_BUFF 750.0f //700.0f
+#define gen3Cap_REFEREE_OFFLINE_POWER_LIM_VAL gen3Cap_MAX_POWER_VALUE
+
+// 传统电容 - 第二代电容 和 WuLie电容
+#define gen2Cap_WARNING_ENERGY_BUFF 1200.0f //1500.0f deprecated
+#define gen2Cap_MINIMUM_ENERGY_BUFF 750.0f //700.0f deprecated
 //7-28-2022晚, 由基于能量的调控改为 基于电压的调控, 因为这样要直观一点, 而且和 直连速度自适应底盘功率控制 算法中 数量数量级差不多
-#define superCap_WARNING_VOL 20.0f //对应superCap_WARNING_ENERGY_BUFF
-#define superCap_MINIMUM_VOL 15.81f //superCap_MINIMUM_ENERGY_BUFF
-#define superCap_MAX_POWER_VALUE 400.0f//300.0f
+#define gen2Cap_WARNING_VOL 20.0f //对应superCap_WARNING_ENERGY_BUFF
+#define gen2Cap_MINIMUM_VOL 15.81f //superCap_MINIMUM_ENERGY_BUFF
+#define gen2Cap_MAX_POWER_VALUE 400.0f//300.0f
 
-#define superCap_REFEREE_OFFLINE_POWER_LIM_VAL superCap_MAX_POWER_VALUE
+#define gen2Cap_REFEREE_OFFLINE_POWER_LIM_VAL gen2Cap_MAX_POWER_VALUE
 
-/*When superCap_ENERGY_BUFF_OUTPUT_CUTOFF_POINT is reached, output will be disabled; and the buff eng need to be recharged to MINIMUM_ENERGY_BUFF to re-enable the output*/
-#define superCap_ENERGY_BUFF_OUTPUT_CUTOFF_POINT 650.0f//700.0f //650.0f
-#define superCap_VOL_OUTPUT_CUTOFF_POINT 13.50f //3.5f //13.50f //14.72f
+/*When gen2Cap_ENERGY_BUFF_OUTPUT_CUTOFF_POINT is reached, output will be disabled; and the buff eng need to be recharged to MINIMUM_ENERGY_BUFF to re-enable the output*/
+#define gen2Cap_ENERGY_BUFF_OUTPUT_CUTOFF_POINT 650.0f//700.0f //650.0f
+#define gen2Cap_VOL_OUTPUT_CUTOFF_POINT 13.50f //3.5f //13.50f //14.72f
 
 //裁判系统功率 缓冲能量信息 间隔; 实时功率热量数据：0x0202。发送频率：50Hz; 即0.02s
-#define superCap_CHASSIS_SUPERCAP_COMM_TIME 0.02f; //由于使用此数值的算法不是特别合理, 目前暂时就用0.02f
+#define gen2Cap_CHASSIS_SUPERCAP_COMM_TIME 0.02f; //由于使用此数值的算法不是特别合理, 目前暂时就用0.02f
 
 /*以下参数未使用*/
-#define superCap_POWER_LIMIT         500.0f//500
-#define superCap_WARNING_POWER       300.0f//40.0f   
-#define superCap_WARNING_POWER_BUFF  40.0f//50.0f   
+#define gen2Cap_POWER_LIMIT         500.0f//500
+#define gen2Cap_WARNING_POWER       300.0f//40.0f   
+#define gen2Cap_WARNING_POWER_BUFF  40.0f//50.0f   
 
-#define superCap_NO_JUDGE_TOTAL_CURRENT_LIMIT    64000.0f    //16000 * 4
-#define superCap_BUFFER_TOTAL_CURRENT_LIMIT      16000.0f
-#define superCap_POWER_TOTAL_CURRENT_LIMIT       20000.0f
+#define gen2Cap_NO_JUDGE_TOTAL_CURRENT_LIMIT    64000.0f    //16000 * 4
+#define gen2Cap_BUFFER_TOTAL_CURRENT_LIMIT      16000.0f
+#define gen2Cap_POWER_TOTAL_CURRENT_LIMIT       20000.0f
 /*--------------*/
 
 typedef enum
@@ -155,6 +143,8 @@ typedef struct
    fp32 total_current;
 	
 	 fp32 total_current_limit;
+	 fp32 cap_vol_cali_total_current_limit; // 根据超级电容电压得到的 标定的 电流上限
+	 // 一般用于需要与gen3cap_spt_total_current_limit进行融合时
 	
 	 fp32 buffer_debuff_total_current_limit;
 	
@@ -173,8 +163,11 @@ typedef struct
 	 uint32_t num_of_normal_loop; //number of times that the speed adaptive mechanism worked normally
 	 uint32_t num_loop_limit_reached; //number of times that the program reached the upper limit of the loop
 	 uint32_t current_loop_cnt;
+	 
+	 fp32 gen3cap_Pmax_spt; // 超级电容能支持的最大功率
+	 fp32 gen3cap_spt_total_current_limit; // 上述值转换出来的 total current limit
 	
-}chassis_energy_control_t;// 使用超级电容时的功率闭环结构体
+}cpc_cap_energy_t;// 使用超级电容时的功率闭环结构体
 
 //不使用超级电容时 直连时 的功率闭环结构体
 typedef struct
@@ -207,7 +200,7 @@ typedef struct
 	 uint32_t num_of_normal_loop; //number of times that the speed adaptive mechanism worked normally
 	 uint32_t num_loop_limit_reached; //number of times that the program reached the upper limit of the loop
 	 uint32_t current_loop_cnt;
-}chassis_energy_control_direct_connect_t;
+}cpc_buffer_energy_t;
 
 /*
  fp32 chassis_power = 0.0f;
@@ -227,7 +220,9 @@ typedef struct
   * @param[in]      chassis_power_control: 底盘数据
   * @retval         none
   */
-extern void chassis_power_control(chassis_move_t *chassis_power_control);
+extern void chassis_power_control_non_speed(chassis_move_t *chassis_power_control);
 extern void speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control);
-extern void superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control);
+extern void gen2_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control);
+extern void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control);
+extern void general_speed_adaptive_chassis_power_control(chassis_move_t *sacpc);
 #endif

@@ -21,10 +21,9 @@
 #include "bsp_servo_pwm.h"
 #include "remote_control.h"
 #include "shoot.h"
-#include "client_ui_task.h"
+#include "referee_ui.h"
 
 
-extern ui_info_t ui_info;
 extern shoot_control_t shoot_control;
 
 /*
@@ -92,11 +91,20 @@ void servo_task(void const * argument)
 //                servo_pwm[i] += PWM_DETAL_VALUE;
 //            }
 						
-						if((servo_rc->key.v & SERVO_ADD_PWM_KEY) && (servo_rc->key.v & KEY_PRESSED_OFFSET_Z))
+						if(servo_rc[TEMP].key[KEY_PRESS_WITH_CTRL].z)
             {
                 servo_pwm[i] -= PWM_DETAL_VALUE;
             }
-            else if(servo_rc->key.v & KEY_PRESSED_OFFSET_Z)
+            else if(servo_rc[TEMP].key[KEY_PRESS].z)
+            {
+                servo_pwm[i] += PWM_DETAL_VALUE;
+            }
+						
+						if(servo_rc[TEMP].key[KEY_PRESS_WITH_SHIFT].w)
+            {
+                servo_pwm[i] -= PWM_DETAL_VALUE;
+            }
+            else if(servo_rc[TEMP].key[KEY_PRESS_WITH_SHIFT].s)
             {
                 servo_pwm[i] += PWM_DETAL_VALUE;
             }
@@ -116,12 +124,12 @@ void servo_task(void const * argument)
 						if((servo_pwm[i] < AMMO_BOX_COVER_OPEN_STATE) || (servo_pwm[i] == AMMO_BOX_COVER_OPEN_STATE))
 						{//µ¯²Õ¿ª
 							//ui_info.ui_ammoBox_sts = ammoOPEN;
-							shoot_control.ammoBox_sts = ammoOPEN;
+							//shoot_control.ammoBox_sts = ammoOPEN;
 						}
 						else if((servo_pwm[i] > AMMO_BOX_COVER_CLOSE_STATE) || (servo_pwm[i] == AMMO_BOX_COVER_CLOSE_STATE))
 						{//µ¯²Õ¹Ø
 							//ui_info.ui_ammoBox_sts = ammoOFF;
-							shoot_control.ammoBox_sts = ammoOFF;
+							//shoot_control.ammoBox_sts = ammoOFF;
 						}
 
             servo_pwm_set(servo_pwm[i], i);

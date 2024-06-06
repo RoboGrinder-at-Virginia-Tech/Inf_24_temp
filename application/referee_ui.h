@@ -2,16 +2,17 @@
 整个协议的组成为:
 frame_header(5-byte)+cmd_id(2-byte)+data(n-byte)+frame_tail(2-byte,CRC16,整包校验)
 */
-#ifndef __RM_CILENT_UI__
-#define __RM_CILENT_UI__
+#ifndef __REFEREE_UI__
+#define __REFEREE_UI__
 
 #define Robot_ID UI_Data_RobotID_BStandard1 //UI_Data_RobotID_RHero //UI_Data_RobotID_BStandard1 //UI_Data_RobotID_RStandard1
 #define Cilent_ID UI_Data_CilentID_BStandard1 //UI_Data_CilentID_RHero //UI_Data_CilentID_BStandard1        //机器人角色设置
 
+#include "referee_interact_task.h"
 #include "stm32f4xx.h"
 #include "stdarg.h"
 #include "usart.h"
-#include "client_ui_coordinate_info.h"
+#include "referee_ui_coordinate_info.h"
 #include "user_lib.h"
 #include "struct_typedef.h"
 #include "gimbal_task.h"
@@ -214,6 +215,10 @@ typedef enum
 
 typedef struct
 {
+	Referee_Interactive_info_t* Referee_Interactive_info;
+	uint32_t dynamic_ui_send_timestamp;
+	uint32_t static_ui_send_timestamp;
+	
   float cap_volt;
 	float cap_pct;
 	float cap_relative_pct;
@@ -237,7 +242,7 @@ typedef struct
 	ui_ammoBox_sts_e ui_ammoBox_sts;
 	uint16_t box_ammoBox_sts_coord[4];
 	
-	//张哥那边反馈的status
+	// miniPC反馈的status
 	ui_cv_sts_e ui_cv_feedback_sts;
 	uint16_t box_cv_feedback_sts[4];
 	
@@ -312,12 +317,7 @@ typedef struct
 	char superCap_error_code[8];
 	uint8_t superCap_error_flag; //0 no err; 1 at least one err
 	
-	char referee_error_code[8];
-	uint8_t referee_error_flag; //0 no err; 1 at least one err
-	
-	const error_t *error_list_UI_local;
-	
-} ui_info_t; //动态的UI信息 结构体 对象
+} interactive_ui_info_t; //动态的UI信息 结构体 对象 属于 Interactive Data的一部分
 
 void UI_Delete(u8 Del_Operate,u8 Del_Layer);
 void Line_Draw(Graph_Data *image,char imagename[3],u32 Graph_Operate,u32 Graph_Layer,u32 Graph_Color,u32 Graph_Width,u32 Start_x,u32 Start_y,u32 End_x,u32 End_y);
@@ -331,11 +331,12 @@ void Float_Draw(Float_Data *image,char imagename[3],u32 Graph_Operate,u32 Graph_
 void Char_Draw(String_Data *image,char imagename[3],u32 Graph_Operate,u32 Graph_Layer,u32 Graph_Color,u32 Graph_Size,u32 Graph_Digit,u32 Graph_Width,u32 Start_x,u32 Start_y,char *Char_Data);
 int Char_ReFresh(String_Data string_Data);
 void Arc_Draw(Graph_Data *image,char imagename[3],u32 Graph_Operate,u32 Graph_Layer,u32 Graph_Color,u32 Graph_StartAngle,u32 Graph_EndAngle,u32 Graph_Width,u32 Start_x,u32 Start_y,u32 x_Length,u32 y_Length);
-void ui_coord_update(void);
-void ui_dynamic_crt_send_fuc(void);
 
-//线程
-void client_ui_task(void const *pvParameters);
+// 用户UI绘制函数
+void UI_init(Referee_Interactive_info_t* Referee_Interactive_info);
+void static_UI_func(void);
+void some_mode_change_check(void);
+void dynamic_UI_func(uint32_t graph_operation);
 
 #endif
 

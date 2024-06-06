@@ -32,6 +32,7 @@
 #include "referee.h"
 #include "arm_math.h"
 #include "AHRS_MiddleWare.h"
+#include "referee_interact_task.h"
 
 extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 
@@ -86,7 +87,7 @@ void init_pc_to_embed_Main_comm_struct_data(void)
 	memset(&pc_info, 0, sizeof(pc_info_t)); // this is used in both tasks
 	
 	//init important control related values
-	pc_info.autoAimFlag = 0;
+	pc_info.auto_aim_mode = AUTO_AIM_OFF;
 	
 	//低通滤波
 	first_order_filter_init(&pc_info.pitchMove_aid_filter, MINIPC_AID_GIMBAL_CONTROL_MSG_TIME, pitchMove_aid_order_filter);
@@ -116,9 +117,16 @@ void init_embed_to_pc_comm_struct_data(void)
 }
 
 /* ---------- setter method 赋值到 pc_info中 ---------- */
-void set_autoAimFlag(uint8_t autoAimFlag)
+void set_auto_aim_mode(auto_aim_mode_e auto_aim_mode)
 {
-	pc_info.autoAimFlag = autoAimFlag;
+	pc_info.auto_aim_mode = auto_aim_mode;
+	
+	// 在模式更改时, 请求绘制UI
+	if(pc_info.auto_aim_mode != pc_info.last_auto_aim_mode)
+	{
+		set_interactive_flag_auto_aim_mode_flag(1);
+	}
+	pc_info.last_auto_aim_mode = pc_info.auto_aim_mode;
 }
 /* ---------- setter method end ---------- */
 
@@ -218,8 +226,7 @@ uint8_t get_shootCommand()
 	return pc_info.shootCommand;
 }
 
-//uint8_t cv_gimbal_sts;
-uint8_t get_cv_gimbal_sts()
+auto_aim_mode_e get_cv_gimbal_sts()
 {
 	return pc_info.cv_gimbal_sts;
 }
@@ -231,9 +238,9 @@ fp32 get_aim_pos_dis()
 }
 
 //uint8_t autoAimFlag
-uint8_t get_autoAimFlag()
+auto_aim_mode_e get_auto_aim_mode()
 {
-	return pc_info.autoAimFlag;
+	return pc_info.auto_aim_mode;
 }
 
 void get_base_ctrl_vx_vy_wrt_gimbal(fp32* vx_out, fp32* vy_out)
@@ -302,7 +309,7 @@ void cmd_process_pc_cmd_gimbal_ctrl_aid(void) //TODO添加数据合理性判断
 	pc_info.enemy_detected = pc_cmd_gimbal_ctrl_aid.is_detect;
 	pc_info.shootCommand = pc_cmd_gimbal_ctrl_aid.shoot;
 
-	pc_info.cv_gimbal_sts = 1; //aim mode FSM
+	pc_info.cv_gimbal_sts = AUTO_AIM_AID; //aim mode FSM
 	
 	//Need to handle the erase of miniPC_info.yawMove_absolute and pitchMove?
 	//3-26-2023 no need to do that for now
@@ -315,7 +322,7 @@ void cmd_process_pc_cmd_gimbal_ctrl_full(void) //TODO添加数据合理性判断
 	pc_info.enemy_detected = pc_cmd_gimbal_ctrl_full.is_detect;
 	pc_info.shootCommand = pc_cmd_gimbal_ctrl_full.shoot;
 
-	pc_info.cv_gimbal_sts = 2; //aim mode FSM
+	pc_info.cv_gimbal_sts = AUTO_AIM_LOCK; //aim mode FSM
 	
 	//Erase the other
 	pc_info.yawMove_aid = 0.0f;
@@ -388,7 +395,7 @@ void pc_comm_data_solve(uint8_t *frame)
 void pc_offline_proc()
 {
 		pc_info.pc_connection_status = PC_OFFLINE;
-	  pc_info.cv_gimbal_sts = 0;
+	  pc_info.cv_gimbal_sts = AUTO_AIM_OFF;
 }
 
 bool_t pc_is_data_error_proc()
@@ -403,7 +410,7 @@ void embed_all_info_update_from_sensor()
 	embed_msg_to_pc.vx_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vx_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vx;
 	embed_msg_to_pc.vy_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vy_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vy;
 	embed_msg_to_pc.vw_wrt_chassis = embed_msg_to_pc.chassis_move_ptr->wz;
-	embed_msg_to_pc.energy_buff_pct = (uint8_t) get_current_cap_pct();
+	embed_msg_to_pc.energy_buff_pct = (uint8_t) simple_get_current_cap_pct();
 	
 	//9-30新增里程计 or use embed_msg_to_pc.chassis_odom_ptr
 	embed_msg_to_pc.odom_dist_x = get_chassis_gimbal_dir_distance_x(); //not used
@@ -674,13 +681,6 @@ void embed_send_data_to_pc_loop()
 {
 	//Update info from robot sensor; update every iteration
 	embed_all_info_update_from_sensor();
-	
-//	//定时创建一次动态的--------------
-//	if(xTaskGetTickCount() - ui_dynamic_crt_sendFreq > ui_dynamic_crt_send_TimeStamp)
-//	{
-//			ui_dynamic_crt_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
-//			ui_dynamic_crt_send_fuc(); //到时间了, 在客户端创建一次动态的图像
-//	}
 	
 	//chassis_info gimbal_info 60Hz create and enqued to fifo
 	if(xTaskGetTickCount() - chassis_info_embed_sendFreq > embed_send_protocol.chassis_info_embed_send_TimeStamp)

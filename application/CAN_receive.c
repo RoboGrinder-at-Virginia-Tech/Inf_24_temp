@@ -31,10 +31,10 @@
 //SZL 3-12-2022
 #include "SuperCap_comm.h"
 
-extern superCap_info_t superCap_info;
-extern wulieCap_info_t wulie_Cap_info;
+extern zidaCap_info_t zidaCap_info;
+extern wulieCap_info_t wulieCap_info;
 extern supercap_can_msg_id_e current_superCap;
-extern sCap23_info_t sCap23_info; //新的超级电容控制板
+extern gen2Cap_info_t gen2Cap_info; //新的超级电容控制板
 extern gen3Cap_info_t gen3Cap_info;
 
 extern CAN_HandleTypeDef hcan1;
@@ -462,20 +462,20 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 //						  detect_hook(TRIGGER_MOTOR_TOE);//这里先使用, 为了OLED的显示: TRIGGER_MOTOR_TOE <=> TRIGGER_MOTOR_17mm_TOE
 //							break;
 //					}
-					case SuperCap_ID:
+					case ZiDaCap_ID:
 					{
-							current_superCap = SuperCap_ID;
-							superCap_info.msg_u_EBPct.array[1] = rx_data[0];
-							superCap_info.msg_u_EBPct.array[0] = rx_data[1];
+							current_superCap = ZiDaCap_ID;
+							zidaCap_info.msg_u_EBPct.array[1] = rx_data[0];
+							zidaCap_info.msg_u_EBPct.array[0] = rx_data[1];
 							
-							superCap_info.msg_u_VBKelvin.array[1] = rx_data[2];
-							superCap_info.msg_u_VBKelvin.array[0] = rx_data[3];
+							zidaCap_info.msg_u_VBKelvin.array[1] = rx_data[2];
+							zidaCap_info.msg_u_VBKelvin.array[0] = rx_data[3];
 						
-							superCap_info.EBPct_fromCap = (float)(superCap_info.msg_u_EBPct.msg_u / 100.0f);
-							superCap_info.VBKelvin_fromCap = (float)(superCap_info.msg_u_VBKelvin.msg_u / 100.0f);
+							zidaCap_info.EBPct_fromCap = (float)(zidaCap_info.msg_u_EBPct.msg_u / 100.0f);
+							zidaCap_info.VBKelvin_fromCap = (float)(zidaCap_info.msg_u_VBKelvin.msg_u / 100.0f);
 						  
 						  //SZL 7-21-2022 新增能量的计算
-						  superCap_info.EBank = 0.5f * superCap_info.VBKelvin_fromCap * superCap_info.VBKelvin_fromCap * CAPACITY_ZIDA_CAP;//CAPACITY=6
+						  zidaCap_info.EBank = 0.5f * zidaCap_info.VBKelvin_fromCap * zidaCap_info.VBKelvin_fromCap * CAPACITY_ZIDA_CAP;//CAPACITY=6
 							
 							
 							debug_r2.data[0] = rx_data_debug[3];
@@ -483,7 +483,7 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							debug_r2.data[2] = rx_data_debug[1];
 							debug_r2.data[3] = rx_data_debug[0];
 							
-							detect_hook(SUPERCAP_TOE);
+							detect_hook(ZIDACAP_TOE);
 							break;
 					}
 					case gen3Cap_ID:
@@ -497,7 +497,7 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							gen3Cap_info.Vbank_f = gen3Cap_info.PowerData[0]; //输入电压
 							gen3Cap_info.Pchassis_f = gen3Cap_info.PowerData[1];//底盘功率
 							gen3Cap_info.Pmax_f = gen3Cap_info.PowerData[2];//当前能补足的最大功率
-							gen3Cap_info.Pflag = rx_data[6];
+							gen3Cap_info.Pflag = (cap_Pflag_e) rx_data[6];
 						
 							//计算容量
 							gen3Cap_info.EBank = 0.5f * gen3Cap_info.Vbank_f * gen3Cap_info.Vbank_f * CAPACITY_GEN3_CAP;//CAPACITY=6
@@ -509,9 +509,9 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							detect_hook(GEN3CAP_TOE);
 							break;
 					}
-					case sCap23_ID:
+					case gen2Cap_ID:
 					{
-							current_superCap = sCap23_ID;
+							current_superCap = gen2Cap_ID;
 						
 //							uint16_t data[4];
 //							data[0] = (uint16_t)(Vin_f * 100.0f);
@@ -521,45 +521,45 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 //							HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, (FDCAN_TxHeaderTypeDef *)&Can_tx_Header, (uint8_t *)&data);
 						
 						  uint16_t* pPowerdata = (uint16_t *) rx_data;//------------------------------------
-							sCap23_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
-							sCap23_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
-							sCap23_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
-							sCap23_info.PowerData[3] = (fp32)pPowerdata[3] / 100.0f;
+							gen2Cap_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
+							gen2Cap_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
+							gen2Cap_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
+							gen2Cap_info.PowerData[3] = (fp32)pPowerdata[3] / 100.0f;
 						
-							sCap23_info.Vin_f = sCap23_info.PowerData[0]; //输入电压
-							sCap23_info.Vbank_f = sCap23_info.PowerData[1];//电容电压
-//							sCap23_info.Vchassis_f = sCap23_info.PowerData[2];//给底盘电压
-							sCap23_info.Cap_fb_set_power = sCap23_info.PowerData[2];//6-14修改 超级电容返回的当前充电功率
-							sCap23_info.Ichassis_f = sCap23_info.PowerData[3];//底盘电流
+							gen2Cap_info.Vin_f = gen2Cap_info.PowerData[0]; //输入电压
+							gen2Cap_info.Vbank_f = gen2Cap_info.PowerData[1];//电容电压
+//							gen2Cap_info.Vchassis_f = sCap23_info.PowerData[2];//给底盘电压
+							gen2Cap_info.Cap_fb_set_power = gen2Cap_info.PowerData[2];//6-14修改 超级电容返回的当前充电功率
+							gen2Cap_info.Ichassis_f = gen2Cap_info.PowerData[3];//底盘电流
 						
 							//计算容量
-							sCap23_info.EBank = 0.5f * sCap23_info.Vbank_f * sCap23_info.Vbank_f * CAPACITY_23_CAP;//CAPACITY=6
-						  sCap23_info.EBPct = (sCap23_info.Vbank_f * sCap23_info.Vbank_f)/(CHARACTERISTIC_VOLTAGE_23_CAP * CHARACTERISTIC_VOLTAGE_23_CAP)*100.0f;
+							gen2Cap_info.EBank = 0.5f * gen2Cap_info.Vbank_f * gen2Cap_info.Vbank_f * CAPACITY_23_CAP;//CAPACITY=6
+						  gen2Cap_info.EBPct = (gen2Cap_info.Vbank_f * gen2Cap_info.Vbank_f)/(CHARACTERISTIC_VOLTAGE_23_CAP * CHARACTERISTIC_VOLTAGE_23_CAP)*100.0f;
 							
 							//计算相对最低电压的百分比
-							sCap23_info.relative_EBpct = cal_capE_relative_pct(sCap23_info.Vbank_f, MIN_VOLTAGE_23_CAP, CHARACTERISTIC_VOLTAGE_23_CAP);
+							gen2Cap_info.relative_EBpct = cal_capE_relative_pct(gen2Cap_info.Vbank_f, MIN_VOLTAGE_23_CAP, CHARACTERISTIC_VOLTAGE_23_CAP);
 							
-							detect_hook(SCAP_23_TOR);
+							detect_hook(GEN2CAP_TOE);
 							break;
 					}
-					case wulie_Cap_CAN_ID:
+					case WuLieCap_CAN_ID:
 					{
-							current_superCap = wulie_Cap_CAN_ID;
+							current_superCap = WuLieCap_CAN_ID;
 						  uint16_t* pPowerdata = (uint16_t *) rx_data;//------------------------------------
-							wulie_Cap_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
-							wulie_Cap_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
-							wulie_Cap_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
-							wulie_Cap_info.PowerData[3] = (fp32)pPowerdata[3] / 100.0f;
+							wulieCap_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
+							wulieCap_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
+							wulieCap_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
+							wulieCap_info.PowerData[3] = (fp32)pPowerdata[3] / 100.0f;
 						
-							wulie_Cap_info.input_voltage = wulie_Cap_info.PowerData[0]; //输入电压
-							wulie_Cap_info.cap_voltage = wulie_Cap_info.PowerData[1];//电容电压
-							wulie_Cap_info.input_current = wulie_Cap_info.PowerData[2];//输入电流
-							wulie_Cap_info.set_power = wulie_Cap_info.PowerData[3];//设定功率
+							wulieCap_info.input_voltage = wulieCap_info.PowerData[0]; //输入电压
+							wulieCap_info.cap_voltage = wulieCap_info.PowerData[1];//电容电压
+							wulieCap_info.input_current = wulieCap_info.PowerData[2];//输入电流
+							wulieCap_info.set_power = wulieCap_info.PowerData[3];//设定功率
 						
 							//计算容量
-							wulie_Cap_info.EBank = 0.5f * wulie_Cap_info.cap_voltage * wulie_Cap_info.cap_voltage * CAPACITY_WULIE_CAP;//CAPACITY=6
-						  wulie_Cap_info.EBPct = (wulie_Cap_info.cap_voltage * wulie_Cap_info.cap_voltage)/(CHARACTERISTIC_VOLTAGE_WULIE_CAP * CHARACTERISTIC_VOLTAGE_WULIE_CAP)*100.0f;
-							detect_hook(WULIE_CAP_TOE);
+							wulieCap_info.EBank = 0.5f * wulieCap_info.cap_voltage * wulieCap_info.cap_voltage * CAPACITY_WULIE_CAP;//CAPACITY=6
+						  wulieCap_info.EBPct = (wulieCap_info.cap_voltage * wulieCap_info.cap_voltage)/(CHARACTERISTIC_VOLTAGE_WULIE_CAP * CHARACTERISTIC_VOLTAGE_WULIE_CAP)*100.0f;
+							detect_hook(WULIECAP_TOE);
 							break;
 					}
 
