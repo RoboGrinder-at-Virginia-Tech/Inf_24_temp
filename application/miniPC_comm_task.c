@@ -131,7 +131,7 @@ void embed_send_communication_task(void const *pvParameters)
 		//osDelay(4);
 		//osDelay(100);
 		//vTaskDelay(1000);
-		vTaskDelay(4); //3-27 use 4 for now -10-28ÔÝÊ±×¢ÊÍ
+		vTaskDelay(2); // 4
 		
 		//record high water mark
 #if INCLUDE_uxTaskGetStackHighWaterMark

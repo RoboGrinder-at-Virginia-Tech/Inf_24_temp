@@ -65,8 +65,8 @@ chassis_info 60 Hz
 gimbal_info 60 Hz
 
 */
-const uint32_t chassis_info_embed_sendFreq = 16; //10; //17; //pre-determined send freq
-const uint32_t gimbal_info_embed_sendFreq = 16; 
+const uint32_t base_gimbal_info_embed_send_freq = 10; //16; //10; //17; //pre-determined send freq
+const uint32_t referee_info_embed_send_freq = 10; //16; 
 
 /*init_miniPC_comm_struct_data; this is the main task
 pc -> embed
@@ -112,8 +112,8 @@ void init_embed_to_pc_comm_struct_data(void)
 	embed_msg_to_pc.chassis_odom_ptr = get_chassis_odom_pointer();
 	
 	embed_send_protocol.p_header = &pc_send_header;
-	embed_send_protocol.chassis_info_embed_send_TimeStamp = xTaskGetTickCount();
-	embed_send_protocol.gimbal_info_embed_send_TimeStamp = xTaskGetTickCount();
+	embed_send_protocol.base_gimbal_info_embed_send_timestamp = 0;
+	embed_send_protocol.referee_info_embed_send_timestamp = 0;
 }
 
 /* ---------- setter method 赋值到 pc_info中 ---------- */
@@ -683,15 +683,14 @@ void embed_send_data_to_pc_loop()
 	embed_all_info_update_from_sensor();
 	
 	//chassis_info gimbal_info 60Hz create and enqued to fifo
-	if(xTaskGetTickCount() - chassis_info_embed_sendFreq > embed_send_protocol.chassis_info_embed_send_TimeStamp)
+	if(xTaskGetTickCount() - base_gimbal_info_embed_send_freq > embed_send_protocol.base_gimbal_info_embed_send_timestamp)
 	{
-		embed_send_protocol.chassis_info_embed_send_TimeStamp = xTaskGetTickCount();
+		embed_send_protocol.base_gimbal_info_embed_send_timestamp = xTaskGetTickCount();
 		//its time to do 1 msg send
 		
 		//Copy value to send struct. simular to Float_Draw
 		embed_base_info_msg_data_update(&embed_base_info, &embed_msg_to_pc);
 		embed_gimbal_info_msg_data_update(&embed_gimbal_info, &embed_msg_to_pc);
-		embed_referee_info_msg_data_update(&embed_referee_info, &embed_msg_to_pc);
 		
 		//msg to fifo; this is like refresh
 //		embed_base_info_refresh(&embed_chassis_info, sizeof(embed_chassis_info_t));
@@ -703,20 +702,24 @@ void embed_send_data_to_pc_loop()
 		uart1_poll_dma_tx();
 		embed_info_msg_refresh((uint8_t*) &embed_gimbal_info, sizeof(embed_gimbal_info_t), GIMBAL_INFO_CMD_ID);
 		uart1_poll_dma_tx();
-		embed_info_msg_refresh((uint8_t*) &embed_referee_info, sizeof(embed_referee_info_t), REFEREE_INFO_CMD_ID);
 		
 		/*
 		进入这个if的频率决定了生产频率, 到时间后才进入这个if, 没到时间不进入这个if
 		没到时间需确认消费者在消费状态
 		*/
-	}//
-//	else //testing
+	}
+	
+//	if(xTaskGetTickCount() - referee_info_embed_send_freq > embed_send_protocol.referee_info_embed_send_timestamp)
 //	{
-//		vTaskDelay(1); //频率 58.37 ~ 58.4
-//		{
-//			uint8_t i = 0;
-//			i++;
-//		}
+//		embed_send_protocol.referee_info_embed_send_timestamp = xTaskGetTickCount();
+//		//its time to do 1 msg send
+//		
+//		//Copy value to send struct. simular to Float_Draw
+//		embed_referee_info_msg_data_update(&embed_referee_info, &embed_msg_to_pc);
+//		
+//		
+//		embed_info_msg_refresh((uint8_t*) &embed_referee_info, sizeof(embed_referee_info_t), REFEREE_INFO_CMD_ID);
+//		uart1_poll_dma_tx();
 //	}
 	
 	
