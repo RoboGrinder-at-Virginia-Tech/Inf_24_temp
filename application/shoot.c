@@ -330,7 +330,7 @@ int16_t shoot_control_loop(void)
 //            shoot_control.shoot_mode = SHOOT_READY_BULLET;
 //        }
 			// 200 BURST_PERIOD
-			shoot_bullet_control_absolute_17mm(2, 10.0f, shoot_control.burst_start_time, 200); // Burst of 3 shots
+			shoot_bullet_control_absolute_17mm(2, 10.0f, shoot_control.burst_start_time, 0); // Burst of 3 shots - 200
     }
     else if(shoot_control.shoot_mode == SHOOT_DONE)
     {
