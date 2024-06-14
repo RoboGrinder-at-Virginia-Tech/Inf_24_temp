@@ -364,6 +364,8 @@ typedef struct
 		
 		uint8_t burst_counter;  // Counter for burst shots
     uint32_t burst_start_time;  // Start time of the burst
+		
+		uint16_t shoot_frequency_set; //设置的射击频率, 每秒几颗弹丸
 } shoot_control_t;
 
 //shoot motor 是 拨弹轮 M2006 motor

@@ -154,6 +154,8 @@ void shoot_init(void)
 		shoot_control.local_heat_limit = shoot_control.heat_limit; //通用 数据
 		shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate(); //通用 数据
     shoot_control.local_heat = 0.0f;
+		
+		shoot_control.key_X_cnt = 1; //默认开启AID
 }
 
 /**
@@ -279,7 +281,7 @@ int16_t shoot_control_loop(void)
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
 //        //设置拨弹轮的拨动速度,并开启堵转反转处理 5-31-2023前老代码
-        shoot_control.trigger_speed_set = 8.37f; //6.25f; //5.5f; //(8.0f/9.0f)*(2.0f*PI);
+        shoot_control.trigger_speed_set = ( (fp32)12.0f ) * (2.0f*PI/9.0f);//( (fp32)shoot_control.shoot_frequency_set ) * (2.0f*PI/9.0f); //8.37f; //6.25f; //5.5f; //(8.0f/9.0f)*(2.0f*PI);
 			  //5.5f; //CONTINUE_TRIGGER_SPEED; //角速度
 			
         trigger_motor_turn_back_17mm();
@@ -493,7 +495,7 @@ static void shoot_set_mode(void)
 		}
 		else if(shoot_control.key_Q_cnt == 2)
 		{
-			shoot_control.user_fire_ctrl = user_SHOOT_SEMI;
+			shoot_control.user_fire_ctrl = user_SHOOT_AUTO; //user_SHOOT_SEMI; //保证不切入 user_SHOOT_SEMI
 		}
 		else if(shoot_control.key_Q_cnt == 0)
 		{
@@ -673,39 +675,52 @@ static void shoot_set_mode(void)
 					}
 				}
     }
+		
+		//添加摩擦轮停转时, 不执行发弹 - 左(或 与)右摩擦轮掉线, 转速极低
+		if(( toe_is_error(SHOOT_FRIC_L_TOE) && toe_is_error(SHOOT_FRIC_R_TOE) ) || ( fabs(shoot_control.left_fricMotor.fricW_speed) < 1.1f && fabs(shoot_control.right_fricMotor.fricW_speed) < 1.1f))
+		{
+			if(shoot_control.shoot_mode > SHOOT_READY)
+			{
+				shoot_control.shoot_mode = SHOOT_READY;
+			}
+		}
 
 		//以下开始热量环
 		shoot_heat_update_calculate(&shoot_control);
 		//17mm ref热量限制
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
-		//只用裁判系统数据的超热量保护
-    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
-    {
-        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-        {
-            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-        }
-    }
-		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
-//		//未使用实时里程计的超热量保护 - 只是开发时的一个测试未移植到其他机器人
-//		if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
-//    {
-//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-//        {
-//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-////						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
-//        }
-//    }
-		
-		//使用实时里程计的超热量保护
-		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
-    {
-        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-        {
-            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-        }
-    }
+		if(!shoot_control.shoot_rc[TEMP].key[KEY_PRESS].c)
+		{
+			//只用裁判系统数据的超热量保护
+			if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
+			{
+					if(shoot_control.shoot_mode >= SHOOT_BULLET)
+					{
+							shoot_control.shoot_mode =SHOOT_READY_BULLET;
+					}
+			}
+			//调试: 难道referee uart掉线后 就没有热量保护了?
+			
+//			//未使用实时里程计的超热量保护 - 只是开发时的一个测试未移植到其他机器人
+//			if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
+//			{
+//					if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+//					{
+//							shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//							//shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
+//					}
+//			}
+			
+			//使用实时里程计的超热量保护
+			if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
+			{
+					if(shoot_control.shoot_mode >= SHOOT_BULLET)
+					{
+							shoot_control.shoot_mode =SHOOT_READY_BULLET;
+					}
+			}
+		}
 		
 //    //如果云台状态是 无力状态，就关闭射击
 //    if (gimbal_cmd_to_shoot_stop())
@@ -1188,6 +1203,24 @@ void shoot_PID_clear(shoot_pid_t *pid)
     pid->Dbuf[0] = pid->Dbuf[1] = pid->Dbuf[2] = 0.0f;
     pid->out = pid->Pout = pid->Iout = pid->Dout = 0.0f;
     pid->fdb = pid->set = 0.0f;
+}
+
+void determine_17mm_shoot_freq(shoot_control_t* shoot_freq)
+{
+	uint16_t temp_cd_rate = 0;
+	if(!toe_is_error(REFEREE_TOE))
+  {
+		temp_cd_rate = get_shooter_id1_17mm_cd_rate();
+  }
+	else
+	{
+		 //裁判系统离线时 hard code 一个默认的冷却和上限
+		 temp_cd_rate = LOCAL_CD_RATE_SAFE_VAL;
+		 shoot_freq->shoot_frequency_set = 12;
+		 return;
+	}
+	
+	shoot_freq->shoot_frequency_set = 12;
 }
 
 uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)

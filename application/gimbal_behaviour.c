@@ -748,8 +748,8 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
 //				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN + miniPC_info.yawMove_aid;
 //				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN + miniPC_info.pitchMove_aid;
 				
-				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN + get_yawMove_aid(1); //未检测到时为0
-				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN + get_pitchMove_aid(1); //未检测到时为0
+				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN; // + get_yawMove_aid(1); //未检测到时为0
+				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN; // + get_pitchMove_aid(1); //未检测到时为0
 				
 				gimbal_control_set->gimbal_yaw_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_yaw_motor.absolute_angle;
 				gimbal_control_set->gimbal_pitch_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_pitch_motor.absolute_angle;
