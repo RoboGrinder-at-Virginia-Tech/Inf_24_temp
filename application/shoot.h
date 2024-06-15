@@ -137,7 +137,7 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
 /*直接 - 裁判系统 原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
-#define SHOOT_HEAT_REMAIN_VALUE     10 //30 //50 //30//50//60//5-24之前:40//30: 1v1参数30; 3v3参数{20}
+#define SHOOT_HEAT_REMAIN_VALUE     30 //20 //10 //30 //50 //30//50//60//5-24之前:40//30: 1v1参数30; 3v3参数{20}
 
 /* 其它热量相关宏定义 - 本地计算热量 */
 #define ONE17mm_BULLET_HEAT_AMOUNT 10
@@ -366,6 +366,7 @@ typedef struct
     uint32_t burst_start_time;  // Start time of the burst
 		
 		uint16_t shoot_frequency_set; //设置的射击频率, 每秒几颗弹丸
+		uint16_t heat_remain_set;
 } shoot_control_t;
 
 //shoot motor 是 拨弹轮 M2006 motor

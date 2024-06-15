@@ -456,6 +456,7 @@ static void shoot_set_mode(void)
     {
         shoot_control.shoot_mode = SHOOT_READY_FRIC; 
 				shoot_control.user_fire_ctrl = user_SHOOT_AUTO;//开启摩擦轮 默认auto
+			shoot_control.key_Q_cnt = 1; //只能启动AUTO - 无按键计数
     }
     //处于中档， 可以使用键盘关闭摩擦轮
     else if (switch_is_mid(shoot_control.shoot_rc[TEMP].rc.switch_left) && (shoot_control.shoot_rc[TEMP].key[KEY_PRESS].e) && shoot_control.shoot_mode != SHOOT_STOP)
@@ -464,25 +465,25 @@ static void shoot_set_mode(void)
 			  shoot_control.key_Q_cnt = 0;
     }
 
-		//处于中档时的 按键Q 按下检测 即 用户火控状态 模式判断
-		if(switch_is_mid(shoot_control.shoot_rc[TEMP].rc.switch_left) && (shoot_control.shoot_rc[TEMP].key[KEY_PRESS].q) && (shoot_control.shoot_mode > SHOOT_STOP))
-		{
-				//shoot_control.key_Q_cnt++;
-				if(shoot_control.last_key_Q_sts == 0)
-				{
-					shoot_control.key_Q_cnt++;
-					//shoot_control.shoot_mode = SHOOT_READY;
-					shoot_control.last_key_Q_sts = 1;
-				}
-				else
-				{
-					shoot_control.last_key_Q_sts = 1;
-				}
-		}
-		else
-		{
-			 shoot_control.last_key_Q_sts = 0;
-		}
+//		//处于中档时的 按键Q 按下检测 即 用户火控状态 模式判断
+//		if(switch_is_mid(shoot_control.shoot_rc[TEMP].rc.switch_left) && (shoot_control.shoot_rc[TEMP].key[KEY_PRESS].q) && (shoot_control.shoot_mode > SHOOT_STOP))
+//		{
+//				//shoot_control.key_Q_cnt++;
+//				if(shoot_control.last_key_Q_sts == 0)
+//				{
+//					shoot_control.key_Q_cnt++;
+//					//shoot_control.shoot_mode = SHOOT_READY;
+//					shoot_control.last_key_Q_sts = 1;
+//				}
+//				else
+//				{
+//					shoot_control.last_key_Q_sts = 1;
+//				}
+//		}
+//		else
+//		{
+//			 shoot_control.last_key_Q_sts = 0;
+//		}
 		
 		if(shoot_control.key_Q_cnt > 2)
 		{
@@ -495,7 +496,7 @@ static void shoot_set_mode(void)
 		}
 		else if(shoot_control.key_Q_cnt == 2)
 		{
-			shoot_control.user_fire_ctrl = user_SHOOT_AUTO; //user_SHOOT_SEMI; //保证不切入 user_SHOOT_SEMI
+			shoot_control.user_fire_ctrl = user_SHOOT_SEMI; //保证不切入 user_SHOOT_SEMI
 		}
 		else if(shoot_control.key_Q_cnt == 0)
 		{
@@ -684,18 +685,39 @@ static void shoot_set_mode(void)
 				shoot_control.shoot_mode = SHOOT_READY;
 			}
 		}
-
+		
 		//以下开始热量环
 		shoot_heat_update_calculate(&shoot_control);
 		//17mm ref热量限制
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
 		
-		if(!shoot_control.shoot_rc[TEMP].key[KEY_PRESS].c)
+		// 6-15-2023 修改 按比赛类型区分热量
+		if(toe_is_error(REFEREE_TOE) || get_game_state_game_type() == 4)
+		{
+			// RMUL 机甲大师高校联盟赛 3V3 对抗
+			shoot_control.shoot_frequency_set = 10;
+			
+			if(shoot_control.heat_limit < 199)
+			{
+				// 选择了冷却优先的刚开始
+				shoot_control.heat_remain_set = 20; //预留两颗
+			} else {
+				shoot_control.heat_remain_set = 50; //预留5颗
+			}
+			
+		}else{
+			// 机甲大师高校联盟赛步兵对抗
+			shoot_control.shoot_frequency_set = 10;
+			shoot_control.heat_remain_set = 50; //预留5颗
+		}
+
+	
+		if( (!shoot_control.shoot_rc[TEMP].key[KEY_PRESS].c) || (!switch_is_down(shoot_control.shoot_rc[TEMP].rc.switch_left)) )
 		{
 			//只用裁判系统数据的超热量保护
-			if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
-			{
-					if(shoot_control.shoot_mode >= SHOOT_BULLET)
+			if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + shoot_control.heat_remain_set > shoot_control.heat_limit)) //SHOOT_HEAT_REMAIN_VALUE
+			{ //shoot_control.shoot_mode >= SHOOT_BULLET
+					if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_3_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
 					{
 							shoot_control.shoot_mode =SHOOT_READY_BULLET;
 					}
@@ -712,14 +734,14 @@ static void shoot_set_mode(void)
 //					}
 //			}
 			
-			//使用实时里程计的超热量保护
-			if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
-			{
-					if(shoot_control.shoot_mode >= SHOOT_BULLET)
-					{
-							shoot_control.shoot_mode =SHOOT_READY_BULLET;
-					}
-			}
+//			//使用实时里程计的超热量保护
+//			if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
+//			{ //shoot_control.shoot_mode >= SHOOT_BULLET
+//					if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_3_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+//					{
+//							shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//					}
+//			}
 		}
 		
 //    //如果云台状态是 无力状态，就关闭射击
@@ -1203,24 +1225,6 @@ void shoot_PID_clear(shoot_pid_t *pid)
     pid->Dbuf[0] = pid->Dbuf[1] = pid->Dbuf[2] = 0.0f;
     pid->out = pid->Pout = pid->Iout = pid->Dout = 0.0f;
     pid->fdb = pid->set = 0.0f;
-}
-
-void determine_17mm_shoot_freq(shoot_control_t* shoot_freq)
-{
-	uint16_t temp_cd_rate = 0;
-	if(!toe_is_error(REFEREE_TOE))
-  {
-		temp_cd_rate = get_shooter_id1_17mm_cd_rate();
-  }
-	else
-	{
-		 //裁判系统离线时 hard code 一个默认的冷却和上限
-		 temp_cd_rate = LOCAL_CD_RATE_SAFE_VAL;
-		 shoot_freq->shoot_frequency_set = 12;
-		 return;
-	}
-	
-	shoot_freq->shoot_frequency_set = 12;
 }
 
 uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
