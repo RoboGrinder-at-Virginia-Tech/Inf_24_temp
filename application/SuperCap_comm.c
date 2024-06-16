@@ -557,27 +557,28 @@ cap_Pflag_e get_gen3Cap_P_Flag()
 // 给 chassis energy regulate 的函数
 fp32 cer_get_current_cap_boost_mode_pct_threshold()
 {
+	// 0.5;
 	// 特殊情况1: 无超级电容在线 - 用的缓冲能量
 	if(all_superCap_is_error())
 	{
-		return 0.5;
+		return 0.3f;
 	}
 	
 	if(current_superCap == ZiDaCap_ID)
 	{
-		return 0.5f;
+		return 0.3f;
 	}
 	else if(current_superCap == gen3Cap_ID)
 	{
-		return 0.5f;
+		return 0.2f;
 	}
 	else if(current_superCap == gen2Cap_ID)
 	{
-		return 0.5f;
+		return 0.3f;
 	}
 	else
 	{
-		return 0.5f;
+		return 0.3f;
 	}
 }
 

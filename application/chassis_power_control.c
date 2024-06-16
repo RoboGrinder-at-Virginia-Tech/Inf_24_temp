@@ -522,8 +522,8 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 		//convert p_max to total_current_limit for esc raw values
 		cpc_cap_energy.cap_vol_cali_total_current_limit = (fp32)cpc_cap_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
 		
-		// 此融合用 两者最小值 可修改
-		cpc_cap_energy.total_current_limit = CPC_MIN(cpc_cap_energy.cap_vol_cali_total_current_limit, cpc_cap_energy.gen3cap_spt_total_current_limit);
+		// 此融合用 两者最大值 可修改
+		cpc_cap_energy.total_current_limit = CPC_MAX(cpc_cap_energy.cap_vol_cali_total_current_limit, cpc_cap_energy.gen3cap_spt_total_current_limit);
 	}
 	else if(cpc_cap_energy.superCap_vol > gen3Cap_MINIMUM_VOL && cpc_cap_energy.superCap_vol < gen3Cap_WARNING_VOL)
 	{//功率限制

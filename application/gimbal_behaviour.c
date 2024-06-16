@@ -628,7 +628,7 @@ static void gimbal_init_control(fp32 *yaw, fp32 *pitch, gimbal_control_t *gimbal
     else
     {
         *pitch = (INIT_PITCH_SET - gimbal_control_set->gimbal_pitch_motor.absolute_angle) * GIMBAL_INIT_PITCH_SPEED;
-        *yaw = (INIT_YAW_SET - gimbal_control_set->gimbal_yaw_motor.relative_angle) * GIMBAL_INIT_YAW_SPEED;
+         *yaw = (INIT_YAW_SET - gimbal_control_set->gimbal_yaw_motor.relative_angle) * GIMBAL_INIT_YAW_SPEED;
     }
 }
 
@@ -742,27 +742,34 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
 		}
 		else
 		{
-			if(get_auto_aim_mode() == AUTO_AIM_AID) //(miniPC_info.autoAimFlag == 1) //&& (miniPC_info.cv_status == 0x01))
-			{ 
-				//old code:
-//				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN + miniPC_info.yawMove_aid;
-//				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN + miniPC_info.pitchMove_aid;
+			*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
+			*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;
 				
-				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN; // + get_yawMove_aid(1); //未检测到时为0
-				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN; // + get_pitchMove_aid(1); //未检测到时为0
-				
-				gimbal_control_set->gimbal_yaw_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_yaw_motor.absolute_angle;
-				gimbal_control_set->gimbal_pitch_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_pitch_motor.absolute_angle;
-				//待添加reset pid
-			} 
-			else if(get_auto_aim_mode() == AUTO_AIM_OFF) //(miniPC_info.autoAimFlag == 0)
-			{
-	//    *yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
-	//    *pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;
-				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
-				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;
-				
-			}
+			gimbal_control_set->gimbal_yaw_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_yaw_motor.absolute_angle;
+			gimbal_control_set->gimbal_pitch_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_pitch_motor.absolute_angle;
+			
+			// old code
+//			if(get_auto_aim_mode() == AUTO_AIM_AID) //(miniPC_info.autoAimFlag == 1) //&& (miniPC_info.cv_status == 0x01))
+//			{ 
+//				//old code:
+////				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN + miniPC_info.yawMove_aid;
+////				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN + miniPC_info.pitchMove_aid;
+//				
+//				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN; // + get_yawMove_aid(1); //未检测到时为0
+//				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN; // + get_pitchMove_aid(1); //未检测到时为0
+//				
+//				gimbal_control_set->gimbal_yaw_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_yaw_motor.absolute_angle;
+//				gimbal_control_set->gimbal_pitch_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_pitch_motor.absolute_angle;
+//				//待添加reset pid
+//			} 
+//			else if(get_auto_aim_mode() == AUTO_AIM_OFF) //(miniPC_info.autoAimFlag == 0)
+//			{
+//	//    *yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
+//	//    *pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;
+//				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
+//				*pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;
+//				
+//			}
 		}
 		
     /*已经屏蔽掉的 掉头转身, 即 不用掉头转身

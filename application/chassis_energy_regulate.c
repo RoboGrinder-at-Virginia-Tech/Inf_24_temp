@@ -62,7 +62,7 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 	{
 		case 0:
 			// 刚松开shift时, 有一个延时, 平滑过渡 --> 再小陀螺减速
-			if(chassis_energy->last_chassis_energy_mode == CHASSIS_BOOST && current_time - chassis_energy->shift_pressed_timestamp >= 1000)
+			if(chassis_energy->last_chassis_energy_mode == CHASSIS_BOOST && current_time - chassis_energy->shift_pressed_timestamp >= 3000)
 			{
 				chassis_energy->chassis_energy_mode = CHASSIS_NORMAL;
 			}
@@ -98,21 +98,21 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 			// 当有按键输入时, 降低小陀螺转速
 			if (fabs(chassis_energy->vx_set) > 0.01 || fabs(chassis_energy->vy_set) > 0.01)
 			{
-				chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+				chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(80); //70
 				chassis_energy->moving_timestamp = current_time;
 			} else {
 				// 底盘刚停下in place时, 有一个延时, 平滑过渡 --> 再小陀螺加速
-				if(current_time - chassis_energy->moving_timestamp >= 500)
+				if(1) //current_time - chassis_energy->moving_timestamp >= 1) // 500
 				{
 					chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(120); // 100
 				} else {
-					chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+					chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(80);
 				}
 			}
 		break;
 		
 		case CHASSIS_NORMAL:
-			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(80);
 		break;
 		
 		case CHASSIS_CHARGE:
@@ -121,7 +121,7 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 
 		default:
 			// as normal
-			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(80);
 		break;
 	}
 }

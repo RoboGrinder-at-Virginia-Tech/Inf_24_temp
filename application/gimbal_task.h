@@ -33,16 +33,16 @@
 #include "remote_control.h"
 
 //miniPC YAW绝对位置角度环 PID miniPC_absolute_angle_pid
-#define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KP 8.0f //10.0f //10.0f //14.0f //20.0F //10.0f //14.0f //15.0f
-#define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KI 0.005f //0.01f //0.02f //0.001f //0.01f //0.02f
+#define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KP 7.0f //8.0f //10.0f //10.0f //14.0f //20.0F //10.0f //14.0f //15.0f
+#define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KI 0.0f //0.005f //0.01f //0.02f //0.001f //0.01f //0.02f
 #define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KD  0.0f //1.5f //0.01f
 #define YAW_MINIPC_ABSOLUTE_ANGLE_PID_MAX_OUT 10.0f //20.0f //10.0f
 #define YAW_MINIPC_ABSOLUTE_ANGLE_PID_MAX_IOUT 1.0f
 
 //miniPC PITCH绝对位置角度环 PID miniPC_absolute_angle_pid
-#define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_KP 8.0f //8.0f //15.0f
-#define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_KI 0.01f //0.00f //4.00f
-#define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_KD  0.0f
+#define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_KP 15.0f //8.0f
+#define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_KI 0.0f //0.01f
+#define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_KD  0.001f
 #define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_MAX_OUT 10.0f
 #define PITCH_MINIPC_ABSOLUTE_ANGLE_PID_MAX_IOUT 1.0f
 
@@ -50,32 +50,32 @@
 
 //yaw speed close-loop PID params, max out and max iout
 //yaw 速度环 PID参数以及 PID最大输出，积分输出
-#define YAW_SPEED_PID_KP        8000.0f //6-29: 8500 9000
-#define YAW_SPEED_PID_KI        1.0f//
-#define YAW_SPEED_PID_KD        0.2f//
+#define YAW_SPEED_PID_KP        60000.0f //8000.0f
+#define YAW_SPEED_PID_KI        40.0f //80.0f //1.0f
+#define YAW_SPEED_PID_KD        0.0f //0.2f
 #define YAW_SPEED_PID_MAX_OUT   30000.0f
 #define YAW_SPEED_PID_MAX_IOUT  5000.0f
 
 //yaw gyro angle close-loop PID params, max out and max iout
 //yaw 角度环 角度由陀螺仪解算 PID参数以及 PID最大输出，积分输出
-#define YAW_GYRO_ABSOLUTE_PID_KP        15.0f //26.0f
-#define YAW_GYRO_ABSOLUTE_PID_KI        0.02f
-#define YAW_GYRO_ABSOLUTE_PID_KD        0.0f //
+#define YAW_GYRO_ABSOLUTE_PID_KP        7.0f //8.5f //8 26.0f
+#define YAW_GYRO_ABSOLUTE_PID_KI        0.0f //0.02f
+#define YAW_GYRO_ABSOLUTE_PID_KD        0.0f //0.001f //
 #define YAW_GYRO_ABSOLUTE_PID_MAX_OUT   10.0f
 #define YAW_GYRO_ABSOLUTE_PID_MAX_IOUT  1.0f
 
 //pitch speed close-loop PID params, max out and max iout
 //pitch 速度环 PID参数以及 PID最大输出，积分输出
-#define PITCH_SPEED_PID_KP        2500.0f //3600.0f 6-2-2023调试调整
-#define PITCH_SPEED_PID_KI        8.0f //20.0f
+#define PITCH_SPEED_PID_KP        8000.0f //2500.0f //3600.0f 6-2-2023调试调整
+#define PITCH_SPEED_PID_KI        80.0f //8.0f //20.0f
 #define PITCH_SPEED_PID_KD        0.0f
 #define PITCH_SPEED_PID_MAX_OUT   30000.0f
 #define PITCH_SPEED_PID_MAX_IOUT  10000.0f
 
 //pitch gyro angle close-loop PID params, max out and max iout
 //pitch 角度环 角度由陀螺仪解算 PID参数以及 PID最大输出，积分输出
-#define PITCH_GYRO_ABSOLUTE_PID_KP 14.0f //15.0f
-#define PITCH_GYRO_ABSOLUTE_PID_KI 4.0f
+#define PITCH_GYRO_ABSOLUTE_PID_KP 19.0f //14.0f //15.0f
+#define PITCH_GYRO_ABSOLUTE_PID_KI 0.0f //4.0f
 #define PITCH_GYRO_ABSOLUTE_PID_KD 0.0f
 
 #define PITCH_GYRO_ABSOLUTE_PID_MAX_OUT 10.0f
@@ -144,7 +144,7 @@
 //云台初始化回中值，允许的误差,并且在误差范围内停止一段时间以及最大时间6s后解除初始化状态，
 #define GIMBAL_INIT_ANGLE_ERROR     0.1f
 #define GIMBAL_INIT_STOP_TIME       100
-#define GIMBAL_INIT_TIME            555 //6000
+#define GIMBAL_INIT_TIME            700 //555 //6000
 #define GIMBAL_CALI_REDUNDANT_ANGLE 0.1f
 //云台初始化回中值的速度以及控制到的角度
 #define GIMBAL_INIT_PITCH_SPEED     0.004f
