@@ -66,7 +66,7 @@
 
 //pitch speed close-loop PID params, max out and max iout
 //pitch 速度环 PID参数以及 PID最大输出，积分输出
-#define PITCH_SPEED_PID_KP        7000.0f //2500.0f //8000.0f //2500.0f //3600.0f 6-2-2023调试调整
+#define PITCH_SPEED_PID_KP        6000.0f //7000.0f //2500.0f //8000.0f //2500.0f //3600.0f 6-2-2023调试调整
 #define PITCH_SPEED_PID_KI        20.0f //8.0f //80.0f //8.0f //20.0f
 #define PITCH_SPEED_PID_KD        0.0f
 #define PITCH_SPEED_PID_MAX_OUT   30000.0f
