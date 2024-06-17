@@ -570,7 +570,7 @@ fp32 cer_get_current_cap_boost_mode_pct_threshold()
 	}
 	else if(current_superCap == gen3Cap_ID)
 	{
-		return 0.2f;
+		return 0.04f;
 	}
 	else if(current_superCap == gen2Cap_ID)
 	{
