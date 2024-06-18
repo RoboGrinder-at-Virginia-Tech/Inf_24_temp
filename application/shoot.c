@@ -281,7 +281,7 @@ int16_t shoot_control_loop(void)
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
 //        //设置拨弹轮的拨动速度,并开启堵转反转处理 5-31-2023前老代码
-        shoot_control.trigger_speed_set = ( (fp32)12.0f ) * (2.0f*PI/9.0f);//( (fp32)shoot_control.shoot_frequency_set ) * (2.0f*PI/9.0f); //8.37f; //6.25f; //5.5f; //(8.0f/9.0f)*(2.0f*PI);
+        shoot_control.trigger_speed_set = ( (fp32)shoot_control.shoot_frequency_set ) * (2.0f*PI/9.0f); //( (fp32)12.0f ) * (2.0f*PI/9.0f);
 			  //5.5f; //CONTINUE_TRIGGER_SPEED; //角速度
 			
         trigger_motor_turn_back_17mm();
@@ -332,7 +332,7 @@ int16_t shoot_control_loop(void)
 //            shoot_control.shoot_mode = SHOOT_READY_BULLET;
 //        }
 			// 200 BURST_PERIOD
-			shoot_bullet_control_absolute_17mm(2, 10.0f, shoot_control.burst_start_time, 0); // Burst of 3 shots - 200
+			shoot_bullet_control_absolute_17mm(2, ( (fp32)20.0f ) * (2.0f*PI/9.0f), shoot_control.burst_start_time, 0); // Burst of 3 shots - 200, 10 rad/s
     }
     else if(shoot_control.shoot_mode == SHOOT_DONE)
     {
@@ -695,20 +695,29 @@ static void shoot_set_mode(void)
 		if(toe_is_error(REFEREE_TOE) || get_game_state_game_type() == 4)
 		{
 			// RMUL 机甲大师高校联盟赛 3V3 对抗
-			shoot_control.shoot_frequency_set = 10;
 			
-			if(shoot_control.heat_limit < 199)
+			if (shoot_control.heat_limit < 200)
 			{
-				// 选择了冷却优先的刚开始
+				// 意外选择了冷却优先的刚开始
 				shoot_control.heat_remain_set = 20; //预留两颗
-			} else {
+				shoot_control.shoot_frequency_set = 12;
+			} else if (shoot_control.heat_limit <= 250) {
+				// 爆发优先 - 一级二级
 				shoot_control.heat_remain_set = 50; //预留5颗
+				shoot_control.shoot_frequency_set = 12;
+			} else if (shoot_control.heat_limit <= 300){
+				// 爆发优先 - 三级
+				shoot_control.heat_remain_set = 50; //预留5颗
+				shoot_control.shoot_frequency_set = 18;
+			}	else {
+				// 爆发优先 - 四级以及上
+				shoot_control.heat_remain_set = 50; //预留5颗
+				shoot_control.shoot_frequency_set = 20;
 			}
-			
 		}else{
 			// 机甲大师高校联盟赛步兵对抗
-			shoot_control.shoot_frequency_set = 10;
 			shoot_control.heat_remain_set = 50; //预留5颗
+			shoot_control.shoot_frequency_set = 20;
 		}
 
 	
