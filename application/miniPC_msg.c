@@ -477,7 +477,7 @@ void embed_all_info_update_from_sensor()
 	}
 	else
 	{
-		embed_msg_to_pc.robot_id = RED_STANDARD_1; //get_robot_id(); //RED_STANDARD_1; //TODO: whether get from ref or hardcode - fail safe
+		embed_msg_to_pc.robot_id = BLUE_STANDARD_1; //get_robot_id(); //RED_STANDARD_1; //TODO: whether get from ref or hardcode - fail safe
 	}
 	
 	//6-25-2023 新增云台角速度 原始数据单位为 rad/s
