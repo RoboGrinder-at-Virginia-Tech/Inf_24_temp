@@ -50,8 +50,8 @@
 
 //yaw speed close-loop PID params, max out and max iout
 //yaw 速度环 PID参数以及 PID最大输出，积分输出
-#define YAW_SPEED_PID_KP        60000.0f //8000.0f
-#define YAW_SPEED_PID_KI        40.0f //80.0f //1.0f
+#define YAW_SPEED_PID_KP        40000.0f //60000.0f //8000.0f
+#define YAW_SPEED_PID_KI        20.0f //40.0f //80.0f //1.0f
 #define YAW_SPEED_PID_KD        0.0f //0.2f
 #define YAW_SPEED_PID_MAX_OUT   30000.0f
 #define YAW_SPEED_PID_MAX_IOUT  5000.0f
