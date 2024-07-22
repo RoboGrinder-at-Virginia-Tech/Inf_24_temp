@@ -176,7 +176,7 @@ void referee_unpack_fifo_data(void)
       
       case STEP_DATA_CRC16:
       {
-        if (p_obj->index < (REF_HEADER_CRC_CMDID_LEN + p_obj->data_len))
+        if ( (p_obj->index < (REF_HEADER_CRC_CMDID_LEN + p_obj->data_len)) && (p_obj->index < REF_PROTOCOL_FRAME_MAX_SIZE) ) // && 是对protocol_packet大小的保护
         {
            p_obj->protocol_packet[p_obj->index++] = byte;  
         }
