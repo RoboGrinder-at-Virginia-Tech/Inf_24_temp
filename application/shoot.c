@@ -341,7 +341,7 @@ int16_t shoot_control_loop(void)
 
     if(shoot_control.shoot_mode == SHOOT_STOP)
     {
-        shoot_laser_off();
+        shoot_laser_off(); // 常开时注释掉
         shoot_control.given_current = 0;
 				//位置环PID 输入参数重置
 				shoot_control.set_angle = shoot_control.angle;
@@ -371,7 +371,14 @@ int16_t shoot_control_loop(void)
     }
     else
     {
-//        shoot_laser_on(); //激光开启
+				if(get_auto_aim_mode() == AUTO_AIM_LOCK)
+				{
+					shoot_laser_off();
+				}
+				else
+				{
+					shoot_laser_on(); //激光开启
+				}
 			
 //				//5-27-2023增加串级PID----
 //			  if(shoot_control.block_flag == 0)
