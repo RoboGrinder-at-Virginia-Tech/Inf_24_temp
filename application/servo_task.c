@@ -39,12 +39,14 @@ SZL MG-995舵机
 标定:
 Hero的弹舱关闭 PWM = 655 = Min; MAX2000
 
-步兵 PWM = 1585 关
-		 PWM = 655 开
+步兵 PWM = 1500 关
+		 PWM = 600 开
+		 
+2000 - 接近180度
 */
 
-#define SERVO_MIN_PWM   655 //开启
-#define SERVO_MAX_PWM   1575//关
+#define SERVO_MIN_PWM   600 //655 //开启
+#define SERVO_MAX_PWM   1500 //1800 //1575//关
 
 #define AMMO_BOX_COVER_CLOSE_STATE SERVO_MAX_PWM
 #define AMMO_BOX_COVER_OPEN_STATE (SERVO_MIN_PWM)
@@ -77,6 +79,8 @@ uint16_t servo_pwm[4] = {SERVO_MAX_PWM, SERVO_MAX_PWM, SERVO_MAX_PWM, SERVO_MAX_
 void servo_task(void const * argument)
 {
     servo_rc = get_remote_control_point();
+		uint32_t dial_ccw_set_val_time = 0;
+		uint32_t dial_cw_set_val_time = 0;
 
     while(1)
     {
@@ -90,21 +94,31 @@ void servo_task(void const * argument)
 //            {
 //                servo_pwm[i] += PWM_DETAL_VALUE;
 //            }
+					
+					// 遥控器滚轮滤波时间
+					if(servo_rc[TEMP].rc.dial > 500)
+					{
+						dial_ccw_set_val_time++;
+					}
+					else
+					{
+						dial_ccw_set_val_time = 0;
+					}
+					
+					if(servo_rc[TEMP].rc.dial < -500)
+					{
+						dial_cw_set_val_time++;
+					}
+					else
+					{
+						dial_cw_set_val_time = 0;
+					}
 						
-						if(servo_rc[TEMP].key[KEY_PRESS_WITH_CTRL].z)
+						if(servo_rc[TEMP].key[KEY_PRESS_WITH_CTRL].b || dial_ccw_set_val_time > 50)
             {
                 servo_pwm[i] -= PWM_DETAL_VALUE;
             }
-            else if(servo_rc[TEMP].key[KEY_PRESS].z)
-            {
-                servo_pwm[i] += PWM_DETAL_VALUE;
-            }
-						
-						if(servo_rc[TEMP].key[KEY_PRESS_WITH_SHIFT].w)
-            {
-                servo_pwm[i] -= PWM_DETAL_VALUE;
-            }
-            else if(servo_rc[TEMP].key[KEY_PRESS_WITH_SHIFT].s)
+            else if(servo_rc[TEMP].key[KEY_PRESS].b || dial_cw_set_val_time > 50)
             {
                 servo_pwm[i] += PWM_DETAL_VALUE;
             }
