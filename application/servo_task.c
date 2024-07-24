@@ -116,11 +116,11 @@ void servo_task(void const * argument)
 						
 						if(servo_rc[TEMP].key[KEY_PRESS_WITH_CTRL].b || dial_ccw_set_val_time > 50)
             {
-                servo_pwm[i] -= PWM_DETAL_VALUE;
+                servo_pwm[i] += PWM_DETAL_VALUE;
             }
             else if(servo_rc[TEMP].key[KEY_PRESS].b || dial_cw_set_val_time > 50)
             {
-                servo_pwm[i] += PWM_DETAL_VALUE;
+                servo_pwm[i] -= PWM_DETAL_VALUE;
             }
 
             //limit the pwm
