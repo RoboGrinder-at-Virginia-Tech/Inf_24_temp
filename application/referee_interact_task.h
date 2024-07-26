@@ -25,6 +25,7 @@ typedef struct
 	uint32_t shoot_mode_flag : 1;
 	uint32_t auto_aim_mode_flag : 1;
 	uint32_t cv_gimbal_sts_flag : 1;
+	uint32_t ammo_box_cover_sts_flag : 1;
 	
 	// ÄÚ²¿¼ì²â
 	uint32_t chassis_error_flag : 1;
@@ -66,5 +67,6 @@ extern void set_interactive_flag_chassis_energy_mode_flag(uint8_t set_val);
 extern void set_interactive_flag_shoot_mode_flag(uint8_t set_val);
 extern void set_interactive_flag_auto_aim_mode_flag(uint8_t set_val);
 extern void set_interactive_flag_cv_gimbal_sts_flag(uint8_t set_val);
+extern void set_interactive_flag_ammo_box_cover_sts_flag(uint8_t set_val);
 
 #endif

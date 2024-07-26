@@ -51,6 +51,10 @@ void set_interactive_flag_cv_gimbal_sts_flag(uint8_t set_val)
 {
 	Referee_Interactive_info.Referee_Interactive_Flag.cv_gimbal_sts_flag = set_val;
 }
+void set_interactive_flag_ammo_box_cover_sts_flag(uint8_t set_val)
+{
+	Referee_Interactive_info.Referee_Interactive_Flag.ammo_box_cover_sts_flag = set_val;
+}
 
 //uint32_t temp_time_check_RTOS = 0;
 //uint32_t temp_time_check_HAL = 0;

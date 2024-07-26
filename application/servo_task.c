@@ -22,6 +22,7 @@
 #include "remote_control.h"
 #include "shoot.h"
 #include "referee_ui.h"
+#include "referee_interact_task.h"
 
 
 extern shoot_control_t shoot_control;
@@ -66,6 +67,8 @@ Hero的弹舱关闭 PWM = 655 = Min; MAX2000
 const RC_ctrl_t *servo_rc;
 //const static uint16_t servo_key[4] = {SERVO1_ADD_PWM_KEY, SERVO2_ADD_PWM_KEY, SERVO3_ADD_PWM_KEY, SERVO4_ADD_PWM_KEY};
 uint16_t servo_pwm[4] = {SERVO_MAX_PWM, SERVO_MAX_PWM, SERVO_MAX_PWM, SERVO_MAX_PWM};
+ui_ammoBox_sts_e last_ui_ammoBox_sts = ammoOFF;
+
 /**
   * @brief          servo_task
   * @param[in]      pvParameters: NULL
@@ -137,13 +140,27 @@ void servo_task(void const * argument)
 						//判断 Ammo Box Cover FSM
 						if((servo_pwm[i] < AMMO_BOX_COVER_OPEN_STATE) || (servo_pwm[i] == AMMO_BOX_COVER_OPEN_STATE))
 						{//弹舱开
-							//ui_info.ui_ammoBox_sts = ammoOPEN;
-							//shoot_control.ammoBox_sts = ammoOPEN;
+							// 后台更新
+							set_ui_ammoBox_sts(ammoOPEN);
+							
+							// 刷新一次
+							if (last_ui_ammoBox_sts != ammoOPEN)
+							{
+								set_interactive_flag_ammo_box_cover_sts_flag(1);
+							}
+							last_ui_ammoBox_sts = ammoOPEN; // update last
 						}
 						else if((servo_pwm[i] > AMMO_BOX_COVER_CLOSE_STATE) || (servo_pwm[i] == AMMO_BOX_COVER_CLOSE_STATE))
 						{//弹舱关
-							//ui_info.ui_ammoBox_sts = ammoOFF;
-							//shoot_control.ammoBox_sts = ammoOFF;
+							// 后台更新
+							set_ui_ammoBox_sts(ammoOFF);
+							
+							// 刷新一次
+							if (last_ui_ammoBox_sts != ammoOFF)
+							{
+								set_interactive_flag_ammo_box_cover_sts_flag(1);
+							}
+							last_ui_ammoBox_sts = ammoOFF; // update last
 						}
 
             servo_pwm_set(servo_pwm[i], i);

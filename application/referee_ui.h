@@ -338,5 +338,7 @@ void static_UI_func(void);
 void some_mode_change_check(void);
 void dynamic_UI_func(uint32_t graph_operation);
 
+void set_ui_ammoBox_sts(ui_ammoBox_sts_e set_val);
+
 #endif
 

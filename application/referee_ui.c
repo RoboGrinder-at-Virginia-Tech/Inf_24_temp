@@ -39,7 +39,7 @@ Graph_Data gAimVertL, gAimHorizL8m;
 Graph_Data gAimHorizL1m, gAimHorizL2m, gAimHorizL4m, gAimHorizL5m, gAimHorizL7m, left8to7, left7to5,left5to4,left4to2, right8to7, right7to5,right5to4,right4to2;
 
 String_Data strChassisSts, strSPINSts; // 底盘状态
-String_Data strCVSts, strGunSts, strProjSLimSts; // 自瞄火控状态
+String_Data strCVSts, strGunSts, strProjSLimSts, strABoxSts; // 自瞄火控弹舱盖状态
 
 //底盘对位线
 Graph_Data chassisPosAimLeftLine, chassisPosAimRightLine;
@@ -57,7 +57,7 @@ Float_Data fProjSLim; // 当前弹速上限
 
 //方框
 Graph_Data gChassisSts_box, gSPINSts_box;// 底盘状态方框
-Graph_Data gCVSts_box, gGunSts_box; // CV用户控制 枪火控状态 已去掉弹舱盖 gABoxSts_box
+Graph_Data gCVSts_box, gGunSts_box, gABoxSts_box; // CV用户控制 枪火控状态 已去掉弹舱盖 
 Graph_Data gEnemyDetected_circle, gCVfb_sts_box; // 敌人是否识别到 CV反馈状态
 
 //超级电容能量框
@@ -78,6 +78,11 @@ interactive_ui_info_t ui_info;
 uint16_t ui_cv_circle_size_debug = TopLeft_Cir_on_cv_DET_Pen_Size;
 
 /**********************************变量定义结束*********************************/
+
+void set_ui_ammoBox_sts(ui_ammoBox_sts_e set_val)
+{
+	ui_info.ui_ammoBox_sts = set_val;
+}
 
 /* ---------------------------- 底盘角度指示器helper function 开始 ---------------------------- */
 //初始化 准备使用arm矩阵库去计算底盘指示器角度
@@ -225,7 +230,7 @@ void static_UI_func()
 	// 火控相关状态 静态字符
 	Char_Draw(&strCVSts, "012", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 19, 3, CV_STS_X, CV_STS_Y,                              			   "CV:  OFF  AID  LOCK");  
 	Char_Draw(&strGunSts, "013", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 19, 3, GUN_STS_X, GUN_STS_Y,                           			   "GUN: OFF  SEMI AUTO");  
-	//Char_Draw(&strABoxSts, "014", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 14, 3, AmmoBox_cover_STS_X, AmmoBox_cover_STS_Y,      			   "ABC: OFF  OPEN");
+	Char_Draw(&strABoxSts, "014", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 14, 3, AmmoBox_cover_STS_X, AmmoBox_cover_STS_Y,      			   "ABC: OFF  OPEN");
 	//Char_Draw(&strDisSts, "015", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 8, 3, Enemy_dis_STS_X, Enemy_dis_STS_Y, 									 "DS:    m");
 	Char_Draw(&strProjSLimSts, "016", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, Projectile_speed_lim_STS_X, Projectile_speed_lim_STS_Y,  "PL:    m/s");
 	
@@ -530,6 +535,30 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Rectangle_Draw(&gCVfb_sts_box, "989", graph_operation, 4, UI_Color_White, 3, ui_info.box_cv_feedback_sts[0], ui_info.box_cv_feedback_sts[1], ui_info.box_cv_feedback_sts[2], ui_info.box_cv_feedback_sts[3]);
 		}
 		UI_ReFresh(1, gCVfb_sts_box);
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.ammo_box_cover_sts_flag == 1)
+	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.ammo_box_cover_sts_flag = 0;
+		if(ui_info.ui_ammoBox_sts == ammoOFF)
+		{
+			ui_info.box_ammoBox_sts_coord[0] = TopLeft_REC_on_ammo_OFF_START_X;
+			ui_info.box_ammoBox_sts_coord[1] = TopLeft_REC_on_ammo_OFF_START_Y;
+			ui_info.box_ammoBox_sts_coord[2] = TopLeft_REC_on_ammo_OFF_END_X;
+			ui_info.box_ammoBox_sts_coord[3] = TopLeft_REC_on_ammo_OFF_END_Y;
+			Rectangle_Draw(&gABoxSts_box, "993", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_ammoBox_sts_coord[0], ui_info.box_ammoBox_sts_coord[1], ui_info.box_ammoBox_sts_coord[2], ui_info.box_ammoBox_sts_coord[3]);
+		}
+		else
+		{
+			ui_info.box_ammoBox_sts_coord[0] = TopLeft_REC_on_ammo_OPEN_START_X;
+			ui_info.box_ammoBox_sts_coord[1] = TopLeft_REC_on_ammo_OPEN_START_Y;
+			ui_info.box_ammoBox_sts_coord[2] = TopLeft_REC_on_ammo_OPEN_END_X;
+			ui_info.box_ammoBox_sts_coord[3] = TopLeft_REC_on_ammo_OPEN_END_Y;
+			Rectangle_Draw(&gABoxSts_box, "993", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_ammoBox_sts_coord[0], ui_info.box_ammoBox_sts_coord[1], ui_info.box_ammoBox_sts_coord[2], ui_info.box_ammoBox_sts_coord[3]);
+		}
+		UI_ReFresh(1, gABoxSts_box);
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
