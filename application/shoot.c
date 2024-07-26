@@ -698,10 +698,21 @@ static void shoot_set_mode(void)
 		//17mm ref热量限制
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
 		
-		// 6-15-2023 修改 按比赛类型区分热量
-		if(toe_is_error(REFEREE_TOE) || get_game_state_game_type() == 4)
+		// 7-26-2023 修改 按比赛类型区分热量
+		if(toe_is_error(REFEREE_TOE))
 		{
-			// RMUL 机甲大师高校联盟赛 3V3 对抗
+			shoot_control.heat_remain_set = 20; //预留5颗
+			shoot_control.shoot_frequency_set = 12;
+		}
+//		else if(get_game_state_game_type() == 5)
+//		{
+//			// 机甲大师高校联盟赛步兵对抗
+//			shoot_control.heat_remain_set = 50; //预留5颗
+//			shoot_control.shoot_frequency_set = 20;
+//		}
+		else
+		{
+			// RMUL 机甲大师高校联盟赛 3V3 对抗 - RMUC 机甲大师超级对抗赛
 			
 			if (shoot_control.heat_limit < 200)
 			{
@@ -721,12 +732,7 @@ static void shoot_set_mode(void)
 				shoot_control.heat_remain_set = 50; //预留5颗
 				shoot_control.shoot_frequency_set = 20;
 			}
-		}else{
-			// 机甲大师高校联盟赛步兵对抗
-			shoot_control.heat_remain_set = 50; //预留5颗
-			shoot_control.shoot_frequency_set = 20;
 		}
-
 	
 		if( (!shoot_control.shoot_rc[TEMP].key[KEY_PRESS].c) || (!switch_is_down(shoot_control.shoot_rc[TEMP].rc.switch_left)) )
 		{
