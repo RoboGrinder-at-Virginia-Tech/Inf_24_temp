@@ -364,7 +364,7 @@ int16_t shoot_control_loop(void)
 //			M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
 		  M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
 			//先刹车然后0电流
-			if(shoot_control.left_fricMotor.fricW_speed < 1.1f && shoot_control.right_fricMotor.fricW_speed < 1.1f)
+			if( (fabs(shoot_control.left_fricMotor.fricW_speed) < 1.1f) && (fabs(shoot_control.right_fricMotor.fricW_speed) < 1.1f) )
 			{
 				CAN_cmd_friction_wheel(0, 0); //已完成刹车, 开始 no power
 			}
@@ -1141,9 +1141,17 @@ const shoot_control_t* get_robot_shoot_control()
 }
 
 /* ---------- getter method 获取数据 ---------- */
+// this function is for ui only
 shoot_mode_e get_shoot_mode()
 {
-	return shoot_control.shoot_mode;
+	if( (fabs(shoot_control.left_fricMotor.fricW_speed) < 15.0f) || (fabs(shoot_control.right_fricMotor.fricW_speed) < 15.0f) )
+	{
+		return SHOOT_STOP;
+	}
+	else
+	{
+		return shoot_control.shoot_mode;
+	}
 }
 
 user_fire_ctrl_e get_user_fire_ctrl()
