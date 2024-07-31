@@ -31,6 +31,7 @@
 #include "linear_throttle.h"
 #include "SuperCap_comm.h"
 #include "referee_interact_task.h"
+#include "referee.h"
 
 #define rc_deadband_limit(input, output, dealine)        \
     {                                                    \
@@ -314,6 +315,13 @@ static void chassis_set_mode(chassis_move_t *chassis_move_mode)
 			chassis_move_mode->chassis_mode = CHASSIS_ZERO_FORCE;
 			chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_RAW;
     }
+		
+		// 当裁判系统在上线且指示chassis口断电时, 底盘设为无力
+		if ( (!toe_is_error(REFEREE_TOE)) && (get_chassis_power_output_status() == 0))
+		{
+			chassis_move_mode->chassis_mode = CHASSIS_ZERO_FORCE;
+			chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_RAW;
+		}
 }
 
 /**
