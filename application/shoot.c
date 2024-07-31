@@ -512,7 +512,8 @@ static void shoot_set_mode(void)
 		//---------Q按键计数以及相关检测结束---------
 		
 		//--------- 基于 user_fire_ctrl 的对UI的绘制 开始 ---------
-		if (shoot_control.last_user_fire_ctrl != shoot_control.user_fire_ctrl)
+		//if ((shoot_control.last_user_fire_ctrl != shoot_control.user_fire_ctrl) || ( (fabs(shoot_control.left_fricMotor.fricW_speed) < 15.0f) || (fabs(shoot_control.right_fricMotor.fricW_speed) < 15.0f) ) )
+		if ( (shoot_control.last_user_fire_ctrl != shoot_control.user_fire_ctrl) || (get_para_hz_time_freq_signal_FreeRTOS(5)) )
 		{
 			set_interactive_flag_shoot_mode_flag(1);
 		}

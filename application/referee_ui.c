@@ -276,6 +276,8 @@ void static_UI_func()
 	Char_ReFresh(strGunSts);
 	//Char_ReFresh(strProjSLimSts);
 	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
+	Char_ReFresh(strABoxSts);
+	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
 	UI_ReFresh(1, superCapFrame);
   vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
 	UI_ReFresh(2, chassisPosAimLeftLine, chassisPosAimRightLine);
@@ -372,6 +374,7 @@ void dynamic_UI_func(uint32_t graph_operation)
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag = 1;
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag = 1;
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag = 1;
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.ammo_box_cover_sts_flag = 1;
 	}
 	
 	// ×´Ì¬ÇÐ»»UI

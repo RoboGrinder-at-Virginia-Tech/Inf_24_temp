@@ -23,6 +23,7 @@
 #include "shoot.h"
 #include "referee_ui.h"
 #include "referee_interact_task.h"
+#include "referee.h"
 
 
 extern shoot_control_t shoot_control;
@@ -46,11 +47,11 @@ Hero的弹舱关闭 PWM = 655 = Min; MAX2000
 2000 - 接近180度
 */
 
-#define SERVO_MIN_PWM   600 //655 //开启
-#define SERVO_MAX_PWM   1500 //1800 //1575//关
+#define SERVO_MIN_PWM   850 //开启
+#define SERVO_MAX_PWM   1750//关
 
-#define AMMO_BOX_COVER_CLOSE_STATE SERVO_MAX_PWM
-#define AMMO_BOX_COVER_OPEN_STATE (SERVO_MIN_PWM)
+#define AMMO_BOX_COVER_CLOSE_STATE (SERVO_MAX_PWM)
+#define AMMO_BOX_COVER_OPEN_STATE (SERVO_MIN_PWM+500)
 
 #define PWM_DETAL_VALUE 10 //10
 
@@ -117,24 +118,49 @@ void servo_task(void const * argument)
 						dial_cw_set_val_time = 0;
 					}
 						
-						if(servo_rc[TEMP].key[KEY_PRESS_WITH_CTRL].b || dial_ccw_set_val_time > 50)
+						/*
+							0：未开始比赛
+							1：准备阶段
+							2：十五秒裁判系统自检阶段
+							3：五秒倒计时
+							4：比赛中
+						*/
+					
+					if (get_game_state_game_progress() == 0)
+					{
+						// servo_pwm[i] -= 1; //开启 请注释掉
+					}
+					else if (get_game_state_game_progress() == 1)
+					{
+						servo_pwm[i] -= 1; //开启
+					}
+					else if (get_game_state_game_progress() == 2)
+					{
+						servo_pwm[i] += 1; // 关闭 - 15秒倒计时
+					}
+					else if (get_game_state_game_progress() == 3)
+					{
+						servo_pwm[i] += 1; // 关闭 - 15秒倒计时
+					}
+					
+            if(servo_rc[TEMP].key[KEY_PRESS_WITH_CTRL].b || dial_cw_set_val_time > 50)
             {
-                servo_pwm[i] += PWM_DETAL_VALUE;
+                servo_pwm[i] -= PWM_DETAL_VALUE; // 开启
             }
-            else if(servo_rc[TEMP].key[KEY_PRESS].b || dial_cw_set_val_time > 50)
+						else if(servo_rc[TEMP].key[KEY_PRESS].b || dial_ccw_set_val_time > 50)
             {
-                servo_pwm[i] -= PWM_DETAL_VALUE;
+                servo_pwm[i] += PWM_DETAL_VALUE; // 关闭
             }
 
             //limit the pwm
            //限制pwm
             if(servo_pwm[i] < SERVO_MIN_PWM)
             {
-                servo_pwm[i] = SERVO_MIN_PWM;
+                servo_pwm[i] = SERVO_MIN_PWM; // 开启
             }
             else if(servo_pwm[i] > SERVO_MAX_PWM)
             {
-                servo_pwm[i] = SERVO_MAX_PWM;
+                servo_pwm[i] = SERVO_MAX_PWM; // 关闭
             }
 						
 						//判断 Ammo Box Cover FSM
