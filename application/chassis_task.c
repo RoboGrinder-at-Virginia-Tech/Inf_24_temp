@@ -65,6 +65,8 @@ uint32_t chassis_high_water;
 
 //底盘运动数据
 chassis_move_t chassis_move;
+uint32_t dial_ccw_set_val_time_chassis;
+uint32_t dial_cw_set_val_time_chassis;
 
 static void chassis_motor_PID_reset()
 {		
@@ -279,6 +281,45 @@ static void chassis_set_mode(chassis_move_t *chassis_move_mode)
 			{
 				chassis_move_mode->chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW;
 				chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+			}
+			
+			// 遥控器滚轮滤波时间
+			if(chassis_move_mode->chassis_RC[TEMP].rc.dial > 500)
+			{
+				dial_ccw_set_val_time_chassis++;
+			}
+			else
+			{
+				dial_ccw_set_val_time_chassis = 0;
+			}
+			
+			if(chassis_move_mode->chassis_RC[TEMP].rc.dial < -500)
+			{
+				dial_cw_set_val_time_chassis++;
+			}
+			else
+			{
+				dial_cw_set_val_time_chassis = 0;
+			}
+			
+			if(dial_cw_set_val_time_chassis > 50)
+			{
+				chassis_move_mode->chassis_mode = CHASSIS_ROTATE_CW_INSPECTION;
+				chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+			}
+			else if(dial_ccw_set_val_time_chassis > 50)
+			{
+				chassis_move_mode->chassis_mode = CHASSIS_ROTATE_CCW_INSPECTION;
+				chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+			}
+			else
+			{
+				// 仅当 不是跟随且不是小陀螺时, 将底盘模式置为跟随
+				if (chassis_move_mode->last_chassis_mode == CHASSIS_ROTATE_CCW_INSPECTION && chassis_move_mode->last_chassis_mode == CHASSIS_ROTATE_CW_INSPECTION)
+				{
+					chassis_move_mode->chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW;
+					chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+				}
 			}
 
       // 按F启动小陀螺 press F to start chassis spin
@@ -690,6 +731,40 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
         //小陀螺 模式下 设置旋转角速度
 				chassis_move_control->wz_set = chassis_move_control->spin_speed;
 		
+			break;
+			
+			case CHASSIS_ROTATE_CCW_INSPECTION:
+				//rotate chassis direction, make sure vertial direction follow gimbal 
+				//旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
+				sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				chassis_move_control->vx_set = cos_yaw * rc_x + sin_yaw * rc_y;
+				chassis_move_control->vy_set = -sin_yaw * rc_x + cos_yaw * rc_y;
+			
+        //set control relative angle  set-point
+        //设置控制相对云台角度
+        chassis_move_control->chassis_relative_angle_set = rad_format(angle_set);
+        
+			  //set ratation speed
+        //小陀螺 模式下 设置旋转角速度
+				chassis_move_control->wz_set = RAD_PER_SEC_FROM_RPM(50);
+			break;
+			
+			case CHASSIS_ROTATE_CW_INSPECTION:
+				//rotate chassis direction, make sure vertial direction follow gimbal 
+				//旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
+				sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				chassis_move_control->vx_set = cos_yaw * rc_x + sin_yaw * rc_y;
+				chassis_move_control->vy_set = -sin_yaw * rc_x + cos_yaw * rc_y;
+			
+        //set control relative angle  set-point
+        //设置控制相对云台角度
+        chassis_move_control->chassis_relative_angle_set = rad_format(angle_set);
+        
+			  //set ratation speed
+        //小陀螺 模式下 设置旋转角速度
+				chassis_move_control->wz_set = -RAD_PER_SEC_FROM_RPM(50);
 			break;
     
       default://CHASSIS_NO_MOVE

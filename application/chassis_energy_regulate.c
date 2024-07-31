@@ -27,7 +27,6 @@
 #include "chassis_task.h"
 #include "referee_interact_task.h"
 
-#define RAD_PER_SEC_FROM_RPM(rpm) ( (float)(((float)rpm) * 2.0f * PI / 60.0f) ) // 将RPM转换为弧度每秒
 
 
 void chassis_energy_regulate(chassis_move_t *chassis_energy)

@@ -182,6 +182,8 @@ typedef enum
     CHASSIS_NO_FOLLOW,         // 不跟随，允许全向平移
     CHASSIS_FOLLOW_GIMBAL_YAW, // 跟随模式，底盘叠加角度环控制
 		CHASSIS_ROTATE,
+		CHASSIS_ROTATE_CCW_INSPECTION,
+	  CHASSIS_ROTATE_CW_INSPECTION,
 
 } chassis_mode_e;
 

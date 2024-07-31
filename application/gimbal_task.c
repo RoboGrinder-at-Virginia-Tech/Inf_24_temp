@@ -214,7 +214,7 @@ static void gimbal_motor_miniPC_autoaim_lock_absolute_angle_control(gimbal_motor
   * @param[out]     gimbal_motor:yaw电机或者pitch电机
   * @retval         none
   */
-static void gimbal_relative_angle_limit(gimbal_motor_t *gimbal_motor, fp32 add);
+static void gimbal_relative_angle_limit(gimbal_motor_t *gimbal_motor, fp32 add, uint8_t bypass);
 
 /**
   * @brief          gimbal angle pid init, because angle is in range(-pi,pi),can't use PID in pid.c
@@ -903,7 +903,7 @@ static void gimbal_set_control(gimbal_control_t *set_control)
     else if (set_control->gimbal_yaw_motor.gimbal_motor_mode == GIMBAL_MOTOR_ENCONDE)
     {
         //enconde模式下，电机编码角度控制
-        gimbal_relative_angle_limit(&set_control->gimbal_yaw_motor, add_yaw_angle);
+        gimbal_relative_angle_limit(&set_control->gimbal_yaw_motor, add_yaw_angle, 1);
     }
 		else if(set_control->gimbal_yaw_motor.gimbal_motor_mode == GIMBAL_MOTOR_MINIPC_AUTOAIM_LOCK)
 		{
@@ -925,7 +925,7 @@ static void gimbal_set_control(gimbal_control_t *set_control)
     else if (set_control->gimbal_pitch_motor.gimbal_motor_mode == GIMBAL_MOTOR_ENCONDE)
     {
         //enconde模式下，电机编码角度控制
-        gimbal_relative_angle_limit(&set_control->gimbal_pitch_motor, add_pitch_angle);
+        gimbal_relative_angle_limit(&set_control->gimbal_pitch_motor, add_pitch_angle, 0);
     }
 		else if(set_control->gimbal_pitch_motor.gimbal_motor_mode == GIMBAL_MOTOR_MINIPC_AUTOAIM_LOCK)
 		{
@@ -1046,22 +1046,30 @@ static void gimbal_miniPC_autoaim_lock_absolute_angle_limit(gimbal_motor_t *gimb
   * @param[out]     gimbal_motor:yaw电机或者pitch电机
   * @retval         none
   */
-static void gimbal_relative_angle_limit(gimbal_motor_t *gimbal_motor, fp32 add)
+/*
+bypass =0 不bypass 有限位
+bypass = 1 要 bypass 没有限位
+*/
+static void gimbal_relative_angle_limit(gimbal_motor_t *gimbal_motor, fp32 add, uint8_t bypass)
 {
     if (gimbal_motor == NULL)
     {
         return;
     }
     gimbal_motor->relative_angle_set += add;
-    //是否超过最大 最小值
-    if (gimbal_motor->relative_angle_set > gimbal_motor->max_relative_angle)
-    {
-        gimbal_motor->relative_angle_set = gimbal_motor->max_relative_angle;
-    }
-    else if (gimbal_motor->relative_angle_set < gimbal_motor->min_relative_angle)
-    {
-        gimbal_motor->relative_angle_set = gimbal_motor->min_relative_angle;
-    }
+		
+		if(bypass == 0)
+		{
+			//是否超过最大 最小值
+			if (gimbal_motor->relative_angle_set > gimbal_motor->max_relative_angle)
+			{
+					gimbal_motor->relative_angle_set = gimbal_motor->max_relative_angle;
+			}
+			else if (gimbal_motor->relative_angle_set < gimbal_motor->min_relative_angle)
+			{
+					gimbal_motor->relative_angle_set = gimbal_motor->min_relative_angle;
+			}
+		}
 }
 
 

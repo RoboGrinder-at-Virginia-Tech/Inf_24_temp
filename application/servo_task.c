@@ -117,6 +117,13 @@ void servo_task(void const * argument)
 					{
 						dial_cw_set_val_time = 0;
 					}
+					
+					// 屏蔽掉up的时候
+					if (switch_is_up(servo_rc[TEMP].rc.switch_right))
+					{
+						dial_ccw_set_val_time = 0;
+						dial_cw_set_val_time = 0;
+					}
 						
 						/*
 							0：未开始比赛

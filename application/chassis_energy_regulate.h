@@ -20,6 +20,8 @@
 #ifndef CHASSIS_ENERGY_REGULATE_H
 #define CHASSIS_ENERGY_REGULATE_H
 
+#define RAD_PER_SEC_FROM_RPM(rpm) ( (float)(((float)rpm) * 2.0f * PI / 60.0f) ) // 将RPM转换为弧度每秒
+
 typedef enum
 {
 	CHASSIS_CHARGE,
