@@ -199,7 +199,7 @@ void static_UI_func()
 	// 瞄准线 静态线
 	//中间
 	//Aim 竖线
-	Line_Draw(&gAimVertL, "001", UI_Graph_ADD, 2, UI_Color_Orange, 1, 960-9, 540+23, 960-9, 500); // end y 0
+	Line_Draw(&gAimVertL, "001", UI_Graph_ADD, 2, UI_Color_Orange, 1, 960, 540-8, 960, 500-8); //960-9, 540+23, 960-9, 500); // end y 0
 		
 	//2m
 	//Line_Draw(&gAimHorizL2m, "003", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-50), (540-24), (960+50), (540-24));//big armor plate
@@ -215,7 +215,7 @@ void static_UI_func()
 	Line_Draw(&gAimHorizL7m, "006", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-9-9), (540-95), (960+9-9), (540-95));		
 	//8m (540-190) "012"
 	//Line_Draw(&gAimHorizL8m, "007", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12), (540-113), (960+12), (540-113));
-	Line_Draw(&gAimHorizL8m, "007", UI_Graph_ADD, 2, UI_Color_Green, 4, (960-7-9), (540+23), (960+7-9), (540+23)); // width 1
+	Line_Draw(&gAimHorizL8m, "007", UI_Graph_ADD, 2, UI_Color_Green, 4, (960-7), (540-8), (960+7), (540-8)); //(960-7-9), (540+23), (960+7-9), (540+23)); // width 1
 	// left side line drawing
 	Line_Draw(&left8to7, "017", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12-9), (540-113), (960-15-9),(540-95) );
 	Line_Draw(&left7to5, "018", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-15-9), (540-95), (960-21-9), (540-66));
