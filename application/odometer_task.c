@@ -132,6 +132,7 @@ void odometer_loop(void)
 	chassis_odom.distance_wz += chassis_odom.d_wz * 0.25f * 3.076035159e-6f / MOTOR_DISTANCE_TO_CENTER;
 	
 	//相对于场地0点坐标变换 - 坐标里程计
+	// 3.076035159e-6f = (轮子半径=0.0762m) * (DJIecd2rad = 2pi/8192 = 0.0007669903939) / (减速比=19)
 	fp32 chassis_yaw = 0.0f; //temp chassis yaw
 	fp32 sin_yaw_abs = 0.0f, cos_yaw_abs = 0.0f;
 	chassis_yaw = rad_format(*(chassis_odom.INS_gimbal_angle_ptr + INS_YAW_ADDRESS_OFFSET) - chassis_odom.chassis_move_ptr->chassis_yaw_motor->relative_angle );
