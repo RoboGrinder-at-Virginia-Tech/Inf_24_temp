@@ -47,8 +47,8 @@ Hero的弹舱关闭 PWM = 655 = Min; MAX2000
 2000 - 接近180度
 */
 
-#define SERVO_MIN_PWM   850 //开启
-#define SERVO_MAX_PWM   1750//关
+#define SERVO_MIN_PWM   850 //开启 850/20000 = 0.0425, 0.0425 * 20ms = 0.85ms, i.e. 850us = 0.85ms
+#define SERVO_MAX_PWM   1750//关 1750us = 1.750 ms
 
 #define AMMO_BOX_COVER_CLOSE_STATE (SERVO_MAX_PWM)
 #define AMMO_BOX_COVER_OPEN_STATE (SERVO_MIN_PWM+500)
